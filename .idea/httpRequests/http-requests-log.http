@@ -1,0 +1,18 @@
+GET http://localhost:5000
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.1.1.1
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-05-20T221132.200.html
+
+###
+
+GET http://localhost:5000
+User-Agent: IntelliJ HTTP Client/PyCharm 2025.1.1.1
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2025-05-20T220936.200.html
+
+###
+
