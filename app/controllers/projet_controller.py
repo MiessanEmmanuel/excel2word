@@ -1,0 +1,574 @@
+from flask import Blueprint, render_template, jsonify, request, send_file
+from ..models.projet import Projet
+from app import db
+from docx import Document
+from io import BytesIO
+from datetime import datetime
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
+import pandas as pd
+from app.utils.role_required import admin_required
+from app.utils.token_required import token_required
+
+bp = Blueprint('projets', __name__)
+
+
+
+EXTENSIONS_AUTORISEE = ["xls", "xlsx"]
+
+@bp.route('/projets', methods=['POST'])
+@token_required
+def create_projet(f):
+    data = request.get_json()
+
+    projet = Projet(
+        nom_client=data.get('nom_client'),
+        nom_projet=data.get('nom_projet'),
+        ville=data.get('ville'),
+        pays=data.get('pays'),
+        adresse_client=data.get('adresse_client'),
+        contacts_client=data.get('contacts_client'),
+        domaine_expertise=data.get('domaine_expertise'),
+        metier=data.get('metier'),
+        desc_courte=data.get('desc_courte'),
+        desc_longue=data.get('desc_longue'),
+        resultat_impact=data.get('resultat_impact'),
+        contact_ressource=data.get('contact_ressource'),
+        equipe_projet=data.get('equipe_projet'),
+        nb_employes_mission=safe_int(data.get('nb_employes_mission')),
+        consultants_associes=data.get('consultants_associes'),
+        nb_employes_consultants=safe_int(data.get('nb_employes_consultants')),
+        cadres_societe=data.get('cadres_societe'),
+        date_debut=data.get('date_debut'),
+        date_fin=data.get('date_fin'),
+        contient_documents=data.get('contient_documents'),
+        cout_projet=data.get('cout_projet'),
+        projet_confidentiel=data.get('projet_confidentiel'),
+        client_confidentiel=data.get('client_confidentiel'),
+        desc_anglaise=data.get('desc_anglaise'),
+        sous_domaines=data.get('sous_domaines')
+    )
+    db.session.add(projet)
+    db.session.commit()
+    return jsonify(projet.to_dict()), 201
+
+
+
+@bp.route('/projets', methods=['GET'])
+@token_required
+def get_projets(f):
+    projets = Projet.query.all()
+    return jsonify([p.to_dict() for p in projets]), 200
+
+
+
+@bp.route('/projets/<int:id>', methods=['GET'])
+@token_required
+def get_projet(id, f):
+    projet = Projet.query.get_or_404(id)
+    return jsonify(projet.to_dict()), 200
+
+
+@bp.route('/projets/<int:id>', methods=['PUT'])
+@admin_required
+def update_projet(id):
+    data = request.get_json()
+    projet = Projet.query.get_or_404(id)
+
+    for key, value in data.items():
+        if hasattr(projet, key):
+            setattr(projet, key, value)
+
+    db.session.commit()
+    return jsonify(projet.to_dict()), 200
+
+
+@bp.route('/projets/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_projet(id):
+    projet = Projet.query.get_or_404(id)
+    db.session.delete(projet)
+    db.session.commit()
+    return jsonify({'message': 'Projet supprimé'}), 200
+
+
+
+@bp.route('/download-word-bm/<int:id>')
+@token_required
+def download_one_bm_word(id):
+    doc = Document()
+    # Exemple de données
+    projet = Projet.query.get_or_404(id)
+    
+    print(projet)
+   
+
+
+    table = doc.add_table(rows=9, cols=2, style='Table Grid')
+    # Récupère les cellules de la première ligne
+    hdr_cells = table.rows[0].cells
+
+    # Fusionne les 2 cellules en une seule (de la cellule 0 à la cellule 2)
+    merged_cell = hdr_cells[0].merge(hdr_cells[1])
+    
+    # Mets du texte dans la cellule fusionnée
+    merged_cell.text = f"Mission {projet.id}"
+        
+
+    # Centrage vertical
+    merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    
+    
+    paragraph = merged_cell.paragraphs[0]
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = paragraph.runs[0]
+    run.font.size = Pt(12)
+    run.bold = True
+
+    # Appliquer un fond orange (code hex sans le #)
+    set_cell_background(merged_cell, "FF6600")  # Orange
+    
+    
+    
+    # LIGNE 1
+    row_1 = table.rows[1].cells
+    row_1[0].text = f"Nom de la mission : {projet.nom_projet}"
+    row_1[1].text = f"Valeur approximative du contrat (en Francs CFA) : {projet.cout_projet} FCFA"
+    
+     # LIGNE 2
+    row_2 = table.rows[2].cells
+    row_2[0].text = f"Pays: {projet.pays} \n Lieu: {projet.ville}"
+    row_2[1].text = f"Durée de la mission(mois) : { calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin) } "
+    
+     # LIGNE 3
+    row_3 = table.rows[3].cells
+    row_3[0].text = f"Nom du client: {projet.nom_client} "
+    row_3[1].text = f"Nombre total d'employés/mois ayant participé à la mission : { projet.nb_employes_mission } "
+    
+    # LIGNE 4
+    row_4 = table.rows[4].cells
+    row_4[0].text = f"Adresse postale et géographique du client:  {projet.adresse_client} "
+    row_4[1].text = f"Valeur approximative des services offerts par votre consultant dans le cadre du contrat (en Francs CFA) : { projet.cout_projet } FCFA   "
+    
+    # LIGNE 5
+    row_5 = table.rows[5].cells
+    row_5[0].text = f"Date de démarrage : {projet.date_debut} \n Date d’achèvement : {projet.date_fin}"
+    row_5[1].text = f"Nombre d'employés/mois fournis par les consultants associés : { projet.nb_employes_consultants }"
+    
+    # LIGNE 6
+    row_6 = table.rows[6].cells
+    row_6[0].text = f"Noms des consultants associés/partenaires éventuels : {projet.consultants_associes}"
+    row_6[1].text = f"Noms des cadres professionnels de votre société employés et fonctions : { projet.cadres_societe }"
+    
+    # LIGNE 7
+    row_7 = table.rows[7].cells
+    merged_cell_7 = row_7[0].merge(row_7[1])
+    merged_cell_7.text = f"Description du projet : {projet.desc_courte}"
+
+
+    # LIGNE 8
+    row_8 = table.rows[8].cells
+    merged_cell_8 = row_8[0].merge(row_8[1])
+    merged_cell_8.text = f"Description des services fournis par le personnel : {projet.desc_longue}"
+    
+
+
+    file_stream = BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=f"projet_{projet.nom_projet}_format_BM.docx",
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
+
+@bp.route('/download-word-giz/<int:id>')
+@token_required
+def download_one_giz_word(id):
+    doc = Document()
+    # Exemple de données
+    projet = Projet.query.get_or_404(id)
+    
+    print(projet)
+   
+
+
+    table = doc.add_table(rows=3, cols=4, style='Table Grid')
+    # Récupère les cellules de la première ligne
+    hdr_cells = table.rows[0].cells
+
+    # Fusionne les 4 cellules en une seule (de la cellule 0 à la cellule 2)
+    merged_cell = hdr_cells[0].merge(hdr_cells[1]).merge(hdr_cells[2]).merge(hdr_cells[3])
+    
+    # Mets du texte dans la cellule fusionnée
+    merged_cell.text = f" "
+        
+
+    # Centrage vertical
+    merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    
+    
+    paragraph = merged_cell.paragraphs[0]
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = paragraph.runs[0]
+    run.font.size = Pt(12)
+    run.bold = True
+
+    # Appliquer un fond orange (code hex sans le #)
+    set_cell_background(merged_cell, "FF6600")  # Orange
+    
+    
+    
+    # LIGNE 1
+    row_1 = table.rows[1].cells
+    row_1[0].text = f"Durée de la mission"
+    row_1[1].text = f"Désignation de la mission / description brève des principaux livrables/produits"
+    row_1[2].text = f"Nom du Client -Pays concernés-"
+    row_1[3].text = f"Nom des cadres professionnels de la société employés et fonctions exécutées"
+    
+    
+    for row in row_1:
+        set_cell_background(row, "08CC0A")  # vert
+        paragraph_row_1 = row.paragraphs[0]
+        run = paragraph_row_1.runs[0]
+        run.bold = True
+
+    
+     # LIGNE 2
+    row_2 = table.rows[2].cells
+    row_2[0].text = f"{ calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin) } mois"
+    row_2[1].text = f"{ projet.nom_projet } / {projet.desc_courte} / "
+    row_2[2].text = f"{ projet.nom_client } - {projet.pays} "
+    row_2[3].text = f"{ projet.cadres_societe }"
+    
+    
+
+    file_stream = BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=f"projet_{projet.nom_projet}_format_GIZ.docx",
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
+     
+
+@bp.route('/download-word-giz')
+@token_required
+def download_all_giz_word():
+    doc = Document()
+    # Exemple de données
+    projets = Projet.query.all()
+    
+    print(projets)
+   
+    nb_rows_table = len(projets)  + 2
+
+    table = doc.add_table(rows=nb_rows_table, cols=4, style='Table Grid')
+    # Récupère les cellules de la première ligne
+    hdr_cells = table.rows[0].cells
+
+    # Fusionne les 4 cellules en une seule (de la cellule 0 à la cellule 2)
+    merged_cell = hdr_cells[0].merge(hdr_cells[1]).merge(hdr_cells[2]).merge(hdr_cells[3])
+    
+    # Mets du texte dans la cellule fusionnée
+    merged_cell.text = f" "
+        
+
+    # Centrage vertical
+    merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    
+    
+    paragraph = merged_cell.paragraphs[0]
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = paragraph.runs[0]
+    run.font.size = Pt(12)
+    run.bold = True
+
+    # Appliquer un fond orange (code hex sans le #)
+    set_cell_background(merged_cell, "FF6600")  # Orange
+    
+    
+    
+    # LIGNE 1
+    row_1 = table.rows[1].cells
+    row_1[0].text = f"Durée de la mission"
+    row_1[1].text = f"Désignation de la mission / description brève des principaux livrables/produits"
+    row_1[2].text = f"Nom du Client -Pays concernés-"
+    row_1[3].text = f"Nom des cadres professionnels de la société employés et fonctions exécutées"
+    
+    
+    for row in row_1:
+        set_cell_background(row, "08CC0A")  # vert
+        paragraph_row_1 = row.paragraphs[0]
+        run = paragraph_row_1.runs[0]
+        run.bold = True
+    
+    for index, projet in enumerate(projets, start=2):
+        row_table = table.rows[index].cells
+        row_table[0].text = f"{ calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin) } mois"
+        row_table[1].text = f"{ projet.nom_projet } / {projet.desc_courte} / "
+        row_table[2].text = f"{ projet.nom_client } - {projet.pays} "
+        row_table[3].text = f"{ projet.cadres_societe }"
+        
+        
+    
+    file_stream = BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+
+
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=f"liste_projets_format_GIZ.docx",
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
+
+
+@bp.get('/download-excel')
+@token_required
+def download_all_excel_old_format():
+    projets = Projet.query.all()
+   # Initialisation des listes
+    num_projet = []
+    nom_client = []
+    nom_projet = []
+    pays = []
+    ville = []
+    adresse_postale = []
+    contacts = []
+    domaine_expertise = []
+    metier = []
+    desc_une_phrase = []
+    desc_paragraphe = []
+    resultat_impact = []
+    contact_ressource = []
+    equipe_projet = []
+    nb_employes = []
+    consultants_associes = []
+    nb_employes_consultants = []
+    cadres_societe = []
+    date_demarrage = []
+    date_achevement = []
+    contient_documents = []
+    cout_projet = []
+    projet_confidentiel = []
+    client_confidentiel = []
+    desc_anglais = []
+    sous_domaines = []
+
+    # Remplissage
+    for projet in projets:
+        num_projet.append(projet.id)
+        nom_client.append(projet.nom_client)
+        nom_projet.append(projet.nom_projet)
+        pays.append(projet.pays or "")
+        ville.append(projet.ville or "")
+        adresse_postale.append(projet.adresse_client)
+        contacts.append(projet.contacts_client)
+        domaine_expertise.append(projet.domaine_expertise)
+        metier.append(projet.metier)
+        desc_une_phrase.append(projet.desc_courte)
+        desc_paragraphe.append(projet.desc_longue)
+        resultat_impact.append(projet.resultat_impact)
+        contact_ressource.append(projet.contact_ressource)
+        equipe_projet.append(projet.equipe_projet)
+        nb_employes.append(projet.nb_employes_mission)
+        consultants_associes.append(projet.consultants_associes)
+        nb_employes_consultants.append(projet.nb_employes_consultants)
+        cadres_societe.append(projet.cadres_societe)
+        date_demarrage.append(projet.date_debut.strftime("%d/%m/%Y") if projet.date_debut else "")
+        date_achevement.append(projet.date_fin.strftime("%d/%m/%Y") if projet.date_fin else "")
+        contient_documents.append("Oui" if projet.contient_documents else "Non")
+        cout_projet.append(projet.cout_projet)
+        projet_confidentiel.append("Oui" if projet.projet_confidentiel else "Non")
+        client_confidentiel.append("Oui" if projet.client_confidentiel else "Non")
+        desc_anglais.append(projet.desc_anglaise)
+        sous_domaines.append(projet.sous_domaines)
+
+    # Construction du dictionnaire final
+    data = {
+        'Numéro du projet': num_projet,
+        'Nom du client': nom_client,
+        'Nom du projet': nom_projet,
+        'Pays': pays,
+        'Ville': ville,
+        'Adresse postale et géographique du client': adresse_postale,
+        'Contacts téléphoniques et adresse électronique du client': contacts,
+        'Domaine d\'expertise': domaine_expertise,
+        'Métier': metier,
+        'Description du projet en une phrase': desc_une_phrase,
+        'Description du projet en un paragraphe': desc_paragraphe,
+        'Résultat et impact obtenus par le projet': resultat_impact,
+        'Contact Ressource Athari': contact_ressource,
+        'Equipe projet': equipe_projet,
+        'Nombre total d’employés / mois ayant participé à la Mission ': nb_employes,
+        'Noms des consultants associés/partenaires éventuels': consultants_associes,
+        'Nombre d\'employés/mois fournis par les consultants associés :': nb_employes_consultants,
+        'Noms des cadres professionnels de votre société employés et fonctions :': cadres_societe,
+        'Date de démarrage': date_demarrage,
+        'Date d\'achèvement': date_achevement,
+        'Contient des documents': contient_documents,
+        'Coût du projet': cout_projet,
+        'Projet confidentiel': projet_confidentiel,
+        'Client confidentiel': client_confidentiel,
+        'Description du projet en Anglais': desc_anglais,
+        'Sous-domaines du projet': sous_domaines
+    }
+
+    df = pd.DataFrame(data)
+    
+
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Base de donnée')
+        
+            # Récupérer le classeur et la feuille
+        workbook = writer.book
+        worksheet = writer.sheets['Base de donnée']
+
+        # Définir le style d'en-tête orange
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#FF6600',  # orange
+            'border': 1
+        })
+        
+        
+        # Appliquer le style à chaque cellule de l'en-tête
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+        
+    output.seek(0)  # Revenir au début du fichier en mémoire
+
+    # Envoyer le fichier au client
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name='Base de donnée Athari.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    
+
+
+@bp.route('/upload-file', methods=["POST"])
+@token_required
+def uploadFile():
+    # Validation des fichiers
+    if 'excel_file' not in request.files:
+        return "Aucun fichier équivalent trouvé dans le champ excel_file"
+
+    excelFile = request.files["excel_file"]
+
+    if excelFile.filename == "":
+        return "Aucun fichier selectionné", 400
+    
+    try:
+        # Lecture du fichier Excel en mémoire
+        data = pd.read_excel(BytesIO(excelFile.read()))
+        print(data.dtypes)
+        print(data.columns.tolist())
+        for index, row in data.iterrows():
+
+            # row est une Series => il faut utiliser row.iloc[i] pour accéder par position
+            projet = Projet(
+            nom_client=safe_str(row["Nom du client"]),
+            nom_projet=safe_str(row["Nom du projet"]),
+            pays=safe_str(row["Pays"]),
+            ville=safe_str(row["Ville"]),
+            adresse_client=safe_str(row["Adresse postale et géographique du client"]),
+            contacts_client=safe_str(row["Contacts téléphoniques et adresse électronique du client"]),
+            domaine_expertise=safe_str(row["Domaine d'expertise"]),
+            metier=safe_str(row["Métier"]),
+            desc_courte=safe_str(row["Description du projet en une phrase"]),
+            desc_longue=safe_str(row["Description du projet en un paragraphe"]),
+            resultat_impact=safe_str(row["Résultat et impact obtenus par le projet"]),
+            contact_ressource=safe_str(row["Contact Ressource Athari"]),
+            equipe_projet=safe_str(row["Equipe projet"]),
+            nb_employes_mission=safe_int(row["Nombre total d’employés / mois ayant participé à la Mission "]),
+            consultants_associes=safe_str(row["Noms des consultants associés/partenaires éventuels"]),
+            nb_employes_consultants=safe_int(row["Nombre d'employés/mois fournis par les consultants associés :"]),
+            cadres_societe=safe_str(row["Noms des cadres professionnels de votre société employés et fonctions :"]),
+            date_debut=row["Date de démarrage"],
+            date_fin=row["Date d'achèvement"],
+            contient_documents=safe_bool(row["Contient des documents"]),
+            cout_projet=safe_str(row["Coût du projet"]),
+            projet_confidentiel=safe_bool(row["Projet confidentiel"]),
+            client_confidentiel=safe_bool(row["Client confidentiel"]),
+            desc_anglaise=safe_str(row["Description du projet en Anglais"]),
+            sous_domaines=safe_str(row["Sous-domaines du projet"])
+)
+            db.session.add(projet)
+            
+            
+        db.session.commit()
+        return "Fichier traité avec succès", 200
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())  # Affiche toute la trace d'erreur
+        return f"Erreur lors de la lecture du fichier : {str(e)}", 500
+  
+
+    
+
+def calcul_duree_mission_en_mois(date_debut, date_fin):
+    start = datetime.strptime(str(date_debut), '%Y-%m-%d')
+    end = datetime.strptime(str(date_fin), '%Y-%m-%d')
+    
+    mois = (end.year - start.year) * 12 + (end.month - start.month)
+
+    # Si le jour de fin est >= au jour de début, on ajoute 1 mois
+    if end.day >= start.day:
+        mois += 1
+    
+    return max(0, mois)  # on évite les durées négatives
+    
+
+def set_cell_background(cell, color_hex):
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:fill'), color_hex)  # couleur hex sans #
+    tcPr.append(shd)
+    
+
+def autoriser_typ_fichiers(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1] in EXTENSIONS_AUTORISEE
+
+
+
+""" def safe_str(value):
+    return str(value) if pd.notna(value) else None """
+
+def safe_int(value):
+    try:
+        if pd.isna(value):
+            return None
+        return int(float(value))  # permet aussi de convertir "3.0" en 3
+    except (ValueError, TypeError):
+        return None
+
+def safe_str(value):
+    return str(value).strip() if pd.notna(value) else None
+
+def safe_bool(value):
+    if pd.isna(value):
+        return False
+    if isinstance(value, str):
+        return value.strip().lower() in ['true', '1', 'oui', 'yes']
+    return bool(value)
