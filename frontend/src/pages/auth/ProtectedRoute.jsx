@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { cloneElement } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from './AuthContext';
@@ -55,7 +55,7 @@ const ProtectedRoute = ({ children, roles = null }) => {
         }
     }
 
-    return children;
+    return cloneElement(children, { user })
 };
 
 export default ProtectedRoute;

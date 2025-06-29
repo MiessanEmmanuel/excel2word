@@ -19,7 +19,7 @@ def register():
         email = data['email'],
         mot_de_passe = hashed_password,
         role = data['role'],
-        actif = data['actif'],
+        actif = True,
         cree_le = datetime.now()
     )
     
@@ -70,3 +70,17 @@ def verify_token(current_user):
             'message': 'Erreur lors de la vérification du token',
             'error': str(e)
         }), 500
+        
+        
+
+@bp.route('/users/me', methods=['GET'])
+@token_required
+def get_me(current_user):
+    return jsonify({
+            'user': {
+                'id': current_user.id,
+                'nom': current_user.nom,
+                'email': current_user.email,
+                'role': current_user.role
+            }
+        }), 200

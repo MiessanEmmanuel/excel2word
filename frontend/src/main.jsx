@@ -6,6 +6,7 @@ import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider, useAuth } from './pages/auth/AuthContext.jsx'
 import { setupAuthInterceptor } from './utils/authMiddleware.jsx'
+import { UserProvider } from './contexts/UserContext.jsx'
 
 
 const AuthInterceptorSetup = () => {

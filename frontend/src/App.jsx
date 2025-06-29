@@ -11,6 +11,7 @@ import Register from './pages/auth/Register.jsx';
 import Login from './pages/auth/Login.jsx';
 import ProtectedRoute from './pages/auth/ProtectedRoute.jsx';
 import FreeRoute from './pages/auth/FreeRoute.jsx';
+import AdminDashboard from './pages/admin/Dashboard.jsx';
 
 function App() {
   return (
@@ -27,24 +28,30 @@ function App() {
         </ProtectedRoute>
 
       } />
+      <Route path="/admin" element={
+        <ProtectedRoute roles={["admin"]}>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+
       <Route path="/projets/create" element={
         <ProtectedRoute>
           <CreateProject />
         </ProtectedRoute>
       } />
       <Route path="/projets/edit/:id" element={
-        <ProtectedRoute>
+        <ProtectedRoute roles={["admin"]}>
           <EditProject />
         </ProtectedRoute>
       } />
       <Route path="/projets/:id" element={
-        <ProtectedRoute>
+        <ProtectedRoute >
           <ShowProject />
         </ProtectedRoute>
 
       } />
       <Route path="/register" element={
-        <FreeRoute>
+        <FreeRoute >
           <Register />
         </FreeRoute>
       }
@@ -61,6 +68,7 @@ function App() {
         </ProtectedRoute>
       } />
     </Routes>
+
 
   );
 }

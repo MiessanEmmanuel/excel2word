@@ -5,6 +5,7 @@ import Layout from '../layouts/Layout';
 import axios from 'axios';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_URL
+
 const Home = () => {
 
     const [selectedFile, setSelectedFile] = useState(null);
@@ -13,6 +14,7 @@ const Home = () => {
     const navigate = useNavigate();
 
     const handleFileSelect = (file) => {
+        console.log(file)
         // Vérifier si le fichier est un fichier Excel
         const validExtensions = ['.xlsx', '.xls', '.xlsm'];
         const validTypes = [
@@ -36,7 +38,8 @@ const Home = () => {
         }
     };
 
-    const handleBrowseClick = () => {
+    const handleBrowseClick = (event) => {
+        event.stopPropagation();
         fileInputRef.current?.click();
     };
 

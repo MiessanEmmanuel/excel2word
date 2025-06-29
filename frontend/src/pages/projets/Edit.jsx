@@ -9,6 +9,8 @@ const EditProject = () => {
     const navigate = useNavigate();
     const apiUrl = import.meta.env.VITE_API_URL;
 
+    const [currentUser, setCurrentUser] = useState(null)
+    const [loadingUser, setLoadingUser] = useState(true)
     const [formData, setFormData] = useState({
         nom_client: '',
         nom_projet: '',
@@ -41,7 +43,31 @@ const EditProject = () => {
     const [loadingData, setLoadingData] = useState(true);
     const [message, setMessage] = useState('');
 
-    // Charger les données du projet
+
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                const res = await axios.get(`${apiUrl}/users/me`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+                )
+                setCurrentUser(res.data.user)
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération de l\'utilisateur :', error)
+                setCurrentUser(null)
+            } finally {
+                setLoadingUser(false)
+            }
+        }
+
+        fetchCurrentUser()
+    }, [])
+
     useEffect(() => {
         const fetchProject = async () => {
             if (!id) return;
@@ -59,6 +85,32 @@ const EditProject = () => {
 
         fetchProject();
     }, [id]);
+
+
+    if (loadingUser) {
+        return (
+            <Layout>
+                <div className="min-h-screen bg-gray-50 py-8">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div className="flex justify-center items-center h-64">
+                                <div className="text-center">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Chargement du projet...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        )
+    }
+
+
+
+
+    // Charger les données du projet
+
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -114,6 +166,11 @@ const EditProject = () => {
                 </div>
             </Layout>
         );
+    }
+
+
+    if (currentUser.role != "admin") {
+        navigate('/not-found');
     }
 
     return (

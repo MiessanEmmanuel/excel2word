@@ -10,8 +10,8 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt
 import pandas as pd
-from app.utils.role_required import admin_required
 from app.utils.token_required import token_required
+from app.utils.role_required import admin_required
 
 bp = Blueprint('projets', __name__)
 
@@ -21,9 +21,15 @@ EXTENSIONS_AUTORISEE = ["xls", "xlsx"]
 
 @bp.route('/projets', methods=['POST'])
 @token_required
-def create_projet(f):
+def create_projet(current_user):
     data = request.get_json()
-
+    date_debut = data.get('date_debut')
+    if not date_debut:
+        date_debut = datetime.now()
+        
+    date_fin = data.get('date_fin')
+    if not date_fin:
+        date_fin = datetime.now()
     projet = Projet(
         nom_client=data.get('nom_client'),
         nom_projet=data.get('nom_projet'),
@@ -42,8 +48,8 @@ def create_projet(f):
         consultants_associes=data.get('consultants_associes'),
         nb_employes_consultants=safe_int(data.get('nb_employes_consultants')),
         cadres_societe=data.get('cadres_societe'),
-        date_debut=data.get('date_debut'),
-        date_fin=data.get('date_fin'),
+        date_debut= date_debut,
+        date_fin=date_fin,
         contient_documents=data.get('contient_documents'),
         cout_projet=data.get('cout_projet'),
         projet_confidentiel=data.get('projet_confidentiel'),
@@ -59,7 +65,7 @@ def create_projet(f):
 
 @bp.route('/projets', methods=['GET'])
 @token_required
-def get_projets(f):
+def get_projets(current_user):
     projets = Projet.query.all()
     return jsonify([p.to_dict() for p in projets]), 200
 
@@ -67,14 +73,14 @@ def get_projets(f):
 
 @bp.route('/projets/<int:id>', methods=['GET'])
 @token_required
-def get_projet(id, f):
+def get_projet(current_user, id):
     projet = Projet.query.get_or_404(id)
     return jsonify(projet.to_dict()), 200
 
 
 @bp.route('/projets/<int:id>', methods=['PUT'])
 @admin_required
-def update_projet(id):
+def update_projet(current_user, id):
     data = request.get_json()
     projet = Projet.query.get_or_404(id)
 
@@ -88,17 +94,68 @@ def update_projet(id):
 
 @bp.route('/projets/<int:id>', methods=['DELETE'])
 @admin_required
-def delete_projet(id):
+def delete_projet(current_user, id):
     projet = Projet.query.get_or_404(id)
     db.session.delete(projet)
     db.session.commit()
     return jsonify({'message': 'Projet supprimé'}), 200
 
 
+@bp.route('/delete-projets-selected', methods=["DELETE"])
+@token_required
+def deleteProjectsSelected(current_user):
+    """
+    Télécharge plusieurs projets sélectionnés au format GIZ
+    Chaque projet est sur une page différente
+    """
+    # Récupérer les IDs des projets depuis les paramètres de requête
+    project_ids = []
+    
+    # Gérer le format ids[] envoyé par axios
+    ids_from_params = request.args.getlist('ids[]')
+    if ids_from_params:
+        for id_str in ids_from_params:
+            try:
+                project_ids.append(int(id_str))
+            except ValueError:
+                continue
+    
+    # Si pas d'IDs dans les paramètres, essayer de les récupérer depuis le JSON body
+    if not project_ids and request.is_json:
+        data = request.get_json()
+        project_ids = data.get('project_ids', [])
+    
+    if not project_ids:
+        return jsonify({'error': 'Aucun projet sélectionné'}), 400
+    
+    for index, project_id in enumerate(project_ids):
+        try:
+            # Récupérer le projet
+            projet = Projet.query.get_or_404(project_id)
+            
+            if not projet:
+                continue
+            db.session.delete(projet)
+            db.session.commit()
+                
+        except Exception as e:
+            print(f"Erreur lors du traitement du projet {project_id}: {str(e)}")
+            continue
+    
+    return jsonify({'message': 'Projet supprimé'}), 200
+
+
+@bp.route('/projets/stats', methods=['GET'])
+@token_required
+def stats(current_user):
+    projets_count = Projet.query.count()
+    return jsonify(projets_count), 200
+
+
 
 @bp.route('/download-word-bm/<int:id>')
 @token_required
-def download_one_bm_word(id):
+def download_one_bm_word(current_user, id):
     doc = Document()
     # Exemple de données
     projet = Projet.query.get_or_404(id)
@@ -188,9 +245,132 @@ def download_one_bm_word(id):
     )
 
 
+@bp.route('/download-bm-projets-selected', methods=["GET", "POST"])
+@token_required
+def downloadBmProjectsSelected(current_user):
+    """
+    Télécharge plusieurs projets sélectionnés au format Word BM
+    Chaque projet est sur une page différente
+    """
+    # Récupérer les IDs des projets depuis les paramètres de requête
+    # Flask ne reconnaît pas automatiquement le format ids[] d'axios
+    project_ids = []
+    
+    # Gérer le format ids[] envoyé par axios
+    # request.args.getlist('ids[]') récupère toutes les valeurs avec la clé 'ids[]'
+    ids_from_params = request.args.getlist('ids[]')
+    if ids_from_params:
+        for id_str in ids_from_params:
+            try:
+                project_ids.append(int(id_str))
+            except ValueError:
+                continue
+    
+    # Si pas d'IDs dans les paramètres, essayer de les récupérer depuis le JSON body
+    if not project_ids and request.is_json:
+        data = request.get_json()
+        project_ids = data.get('project_ids', [])
+    
+    if not project_ids:
+        return jsonify({'error': 'Aucun projet sélectionné'}), 400
+    
+    # Créer un nouveau document
+    doc = Document()
+    
+    # Pour chaque projet sélectionné
+    for index, project_id in enumerate(project_ids):
+        try:
+            # Récupérer le projet
+            projet = Projet.query.get(project_id)
+            if not projet:
+                continue
+                
+            # Ajouter un saut de page entre les projets (sauf pour le premier)
+            if index > 0:
+                doc.add_page_break()
+            
+            # Créer le tableau pour ce projet
+            table = doc.add_table(rows=9, cols=2, style='Table Grid')
+            
+            # LIGNE 0 - En-tête fusionné
+            hdr_cells = table.rows[0].cells
+            merged_cell = hdr_cells[0].merge(hdr_cells[1])
+            merged_cell.text = f"Mission {projet.id}"
+            
+            # Centrage vertical et horizontal
+            merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            paragraph = merged_cell.paragraphs[0]
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = paragraph.runs[0]
+            run.font.size = Pt(12)
+            run.bold = True
+            
+            # Appliquer un fond orange
+            set_cell_background(merged_cell, "FF6600")
+            
+            # LIGNE 1
+            row_1 = table.rows[1].cells
+            row_1[0].text = f"Nom de la mission : {projet.nom_projet}"
+            row_1[1].text = f"Valeur approximative du contrat (en Francs CFA) : {projet.cout_projet} FCFA"
+            
+            # LIGNE 2
+            row_2 = table.rows[2].cells
+            row_2[0].text = f"Pays: {projet.pays} \n Lieu: {projet.ville}"
+            row_2[1].text = f"Durée de la mission(mois) : {calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin)}"
+            
+            # LIGNE 3
+            row_3 = table.rows[3].cells
+            row_3[0].text = f"Nom du client: {projet.nom_client}"
+            row_3[1].text = f"Nombre total d'employés/mois ayant participé à la mission : {projet.nb_employes_mission}"
+            
+            # LIGNE 4
+            row_4 = table.rows[4].cells
+            row_4[0].text = f"Adresse postale et géographique du client: {projet.adresse_client}"
+            row_4[1].text = f"Valeur approximative des services offerts par votre consultant dans le cadre du contrat (en Francs CFA) : {projet.cout_projet} FCFA"
+            
+            # LIGNE 5
+            row_5 = table.rows[5].cells
+            row_5[0].text = f"Date de démarrage : {projet.date_debut} \n Date d'achèvement : {projet.date_fin}"
+            row_5[1].text = f"Nombre d'employés/mois fournis par les consultants associés : {projet.nb_employes_consultants}"
+            
+            # LIGNE 6
+            row_6 = table.rows[6].cells
+            row_6[0].text = f"Noms des consultants associés/partenaires éventuels : {projet.consultants_associes}"
+            row_6[1].text = f"Noms des cadres professionnels de votre société employés et fonctions : {projet.cadres_societe}"
+            
+            # LIGNE 7 - Description du projet (cellules fusionnées)
+            row_7 = table.rows[7].cells
+            merged_cell_7 = row_7[0].merge(row_7[1])
+            merged_cell_7.text = f"Description du projet : {projet.desc_courte}"
+            
+            # LIGNE 8 - Description des services (cellules fusionnées)
+            row_8 = table.rows[8].cells
+            merged_cell_8 = row_8[0].merge(row_8[1])
+            merged_cell_8.text = f"Description des services fournis par le personnel : {projet.desc_longue}"
+            
+        except Exception as e:
+            print(f"Erreur lors du traitement du projet {project_id}: {str(e)}")
+            continue
+    
+    # Sauvegarder le document dans un flux de bytes
+    file_stream = BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+    
+    # Retourner le fichier
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=f"projets_selection_{len(project_ids)}_format_BM.docx",
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
+
+
+
 @bp.route('/download-word-giz/<int:id>')
 @token_required
-def download_one_giz_word(id):
+def download_one_giz_word(current_user,id):
     doc = Document()
     # Exemple de données
     projet = Projet.query.get_or_404(id)
@@ -260,11 +440,110 @@ def download_one_giz_word(id):
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
-     
+@bp.route('/download-giz-projets-selected', methods=["GET", "POST"])
+@token_required
+def downloadGizProjectsSelected(current_user):
+    """
+    Télécharge plusieurs projets sélectionnés au format GIZ
+    Chaque projet est sur une page différente
+    """
+    # Récupérer les IDs des projets depuis les paramètres de requête
+    project_ids = []
+    
+    # Gérer le format ids[] envoyé par axios
+    ids_from_params = request.args.getlist('ids[]')
+    if ids_from_params:
+        for id_str in ids_from_params:
+            try:
+                project_ids.append(int(id_str))
+            except ValueError:
+                continue
+    
+    # Si pas d'IDs dans les paramètres, essayer de les récupérer depuis le JSON body
+    if not project_ids and request.is_json:
+        data = request.get_json()
+        project_ids = data.get('project_ids', [])
+    
+    if not project_ids:
+        return jsonify({'error': 'Aucun projet sélectionné'}), 400
+    
+    # Créer un nouveau document
+    doc = Document()
+    
+    # Pour chaque projet sélectionné
+    for index, project_id in enumerate(project_ids):
+        try:
+            # Récupérer le projet
+            projet = Projet.query.get(project_id)
+            if not projet:
+                continue
+                
+            # Ajouter un saut de page entre les projets (sauf pour le premier)
+            if index > 0:
+                doc.add_page_break()
+            
+            # Créer le tableau pour ce projet (3 lignes, 4 colonnes)
+            table = doc.add_table(rows=3, cols=4, style='Table Grid')
+            
+            # LIGNE 0 - En-tête fusionné
+            hdr_cells = table.rows[0].cells
+            # Fusionner les 4 cellules
+            merged_cell = hdr_cells[0].merge(hdr_cells[1]).merge(hdr_cells[2]).merge(hdr_cells[3])
+            merged_cell.text = " "  # Espace vide comme dans l'original
+            
+            # Centrage vertical et horizontal
+            merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            paragraph = merged_cell.paragraphs[0]
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = paragraph.runs[0]
+            run.font.size = Pt(12)
+            run.bold = True
+            
+            # Appliquer un fond orange
+            set_cell_background(merged_cell, "FF6600")
+            
+            # LIGNE 1 - En-têtes des colonnes
+            row_1 = table.rows[1].cells
+            row_1[0].text = "Durée de la mission"
+            row_1[1].text = "Désignation de la mission / description brève des principaux livrables/produits"
+            row_1[2].text = "Nom du Client -Pays concernés-"
+            row_1[3].text = "Nom des cadres professionnels de la société employés et fonctions exécutées"
+            
+            # Appliquer le style aux en-têtes
+            for cell in row_1:
+                set_cell_background(cell, "08CC0A")  # Vert
+                paragraph_row_1 = cell.paragraphs[0]
+                run = paragraph_row_1.runs[0]
+                run.bold = True
+            
+            # LIGNE 2 - Données du projet
+            row_2 = table.rows[2].cells
+            row_2[0].text = f"{calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin)} mois"
+            row_2[1].text = f"{projet.nom_projet} / {projet.desc_courte} / "
+            row_2[2].text = f"{projet.nom_client} - {projet.pays}"
+            row_2[3].text = f"{projet.cadres_societe}"
+            
+        except Exception as e:
+            print(f"Erreur lors du traitement du projet {project_id}: {str(e)}")
+            continue
+    
+    # Sauvegarder le document dans un flux de bytes
+    file_stream = BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+    
+    # Retourner le fichier
+    return send_file(
+        file_stream,
+        as_attachment=True,
+        download_name=f"projets_selection_{len(project_ids)}_format_GIZ.docx",
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
 
 @bp.route('/download-word-giz')
 @token_required
-def download_all_giz_word():
+def download_all_giz_word(current_user):
     doc = Document()
     # Exemple de données
     projets = Projet.query.all()
@@ -338,7 +617,7 @@ def download_all_giz_word():
 
 @bp.get('/download-excel')
 @token_required
-def download_all_excel_old_format():
+def download_all_excel_old_format(current_user):
     projets = Projet.query.all()
    # Initialisation des listes
     num_projet = []
@@ -467,7 +746,7 @@ def download_all_excel_old_format():
 
 @bp.route('/upload-file', methods=["POST"])
 @token_required
-def uploadFile():
+def uploadFile(current_user):
     # Validation des fichiers
     if 'excel_file' not in request.files:
         return "Aucun fichier équivalent trouvé dans le champ excel_file"
@@ -503,8 +782,8 @@ def uploadFile():
             consultants_associes=safe_str(row["Noms des consultants associés/partenaires éventuels"]),
             nb_employes_consultants=safe_int(row["Nombre d'employés/mois fournis par les consultants associés :"]),
             cadres_societe=safe_str(row["Noms des cadres professionnels de votre société employés et fonctions :"]),
-            date_debut=row["Date de démarrage"],
-            date_fin=row["Date d'achèvement"],
+            date_debut=safe_date(row["Date de démarrage"]),
+            date_fin=safe_date(row["Date d'achèvement"]),
             contient_documents=safe_bool(row["Contient des documents"]),
             cout_projet=safe_str(row["Coût du projet"]),
             projet_confidentiel=safe_bool(row["Projet confidentiel"]),
@@ -522,8 +801,17 @@ def uploadFile():
         import traceback
         print(traceback.format_exc())  # Affiche toute la trace d'erreur
         return f"Erreur lors de la lecture du fichier : {str(e)}", 500
-  
 
+
+
+    
+    
+    
+    
+    
+
+    
+    
     
 
 def calcul_duree_mission_en_mois(date_debut, date_fin):
@@ -551,10 +839,6 @@ def autoriser_typ_fichiers(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in EXTENSIONS_AUTORISEE
 
 
-
-""" def safe_str(value):
-    return str(value) if pd.notna(value) else None """
-
 def safe_int(value):
     try:
         if pd.isna(value):
@@ -572,3 +856,11 @@ def safe_bool(value):
     if isinstance(value, str):
         return value.strip().lower() in ['true', '1', 'oui', 'yes']
     return bool(value)
+
+def safe_date(value):
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.strptime(value, "%d/%m/%Y")
+    except (ValueError, TypeError):
+        return None  

@@ -3,8 +3,8 @@ from ..models.user import Utilisateur
 from datetime import datetime
 import os
 from app.utils.role_required import admin_required
-from werkzeug.security import generate_password_hash
-from app import db  # Importez votre instance de base de données
+
+from app import db, bcrypt  # Importez votre instance de base de données
 
 bp = Blueprint('utilisateurs', __name__, url_prefix='/users')
 
@@ -68,7 +68,7 @@ def create_user(current_user):
         utilisateur = Utilisateur(
             nom=data['nom'],
             email=data['email'],
-            mot_de_passe=generate_password_hash(data['mot_de_passe']),
+            mot_de_passe= bcrypt.generate_password_hash(data['mot_de_passe']).decode('utf-8'),
             role=data.get('role', 'consultant'),
             actif=data.get('actif', True)
         )
@@ -117,7 +117,7 @@ def update_user(current_user, user_id: int):
                 return jsonify({'error': 'Un autre utilisateur utilise déjà cet email'}), 409
             utilisateur.email = data['email']
         if 'mot_de_passe' in data:
-            utilisateur.mot_de_passe = generate_password_hash(data['mot_de_passe'])
+            utilisateur.mot_de_passe = bcrypt.generate_password_hash(data['mot_de_passe']).decode('utf-8')
         if 'role' in data:
             utilisateur.role = data['role']
         if 'actif' in data:

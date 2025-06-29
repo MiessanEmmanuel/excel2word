@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from "axios";
 import Layout from '../../layouts/Layout';
-import { Link } from 'react-router-dom';
-import { Delete, Download, Edit, Eye, Loader, Plus } from 'lucide-react';
-
-
+import { Await, Link } from 'react-router-dom';
+import { Delete, Download, Edit, Eye, Loader, Loader2, Plus } from 'lucide-react';
 
 const Projects = () => {
 
     const apiUrl = import.meta.env.VITE_API_URL
-
     // State variables
     const [projects, setProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -17,23 +14,79 @@ const Projects = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(5);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteModalSelectProject, setShowDeleteModalSelectProject] = useState(false);
+
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [notifications, setNotifications] = useState([]);
+    const [loadingProject, setLoading] = useState(true);
+    const [loadingWordGiz, setLoadingWordGiz] = useState(false);
+    const [loadingExcel, setLoadingExcel] = useState(false);
+    const [loadingGizOne, setLoadingGizOne] = useState(false);
+    const [loadingBmOne, setLoadingBmOne] = useState(false);
+    const [projectToDownload, setProjectToDownload] = useState(null);
 
-    const token = localStorage.getItem('token');
+    const [loadingBmSelectProjet, setLoadingBmSelectProjet] = useState(false);
+    const [loadingGizSelectProjet, setLoadingGizSelectProjet] = useState(false);
+
+
+
+
+
+
+
+    const [projectsSelected, setProjectsSelected] = useState([]);
+    const [checkedAllProjet, setCheckedAllProjet] = useState(false);
+
+
+
+    const [currentUser, setCurrentUser] = useState(null)
+    const [loadingUser, setLoadingUser] = useState(true)
+
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                const res = await axios.get(`${apiUrl}/users/me`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+                )
+                setCurrentUser(res.data.user)
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération de l\'utilisateur :', error)
+                setCurrentUser(null)
+            } finally {
+                setLoadingUser(false)
+            }
+        }
+
+        fetchCurrentUser()
+    }, [])
+
+    useEffect(() => {
+        const listAvailableProject = projects.filter(project => projectsSelected.includes(project.id))
+        setProjectsSelected(listAvailableProject.map(p => p.id))
+
+    }, [projects])
 
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const token = localStorage.getItem('token');
-
+                const token = localStorage.getItem('token')
                 const res = await axios.get(`${apiUrl}/projets`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 })
                 setProjects(res.data) // stocke les projets
 
             } catch (error) {
                 console.error('Erreur lors de la récupération des projets :', error)
+            } finally {
+                setLoading(false);
             }
         }
 
@@ -62,11 +115,11 @@ const Projects = () => {
         filtered.sort((a, b) => {
             switch (sortBy) {
                 case 'nom':
-                    return a.nom_projet.localeCompare(b.nom);
+                    return a.nom_projet?.localeCompare(b.nom);
                 case 'client':
-                    return a.nom_client.localeCompare(b.nom_client);
+                    return a.nom_client?.localeCompare(b.nom_client);
                 case 'ville':
-                    return a.ville.localeCompare(b.ville);
+                    return a.ville?.localeCompare(b.ville);
                 case 'date':
                     return new Date(b.date_debut) - new Date(a.date_debut);
                 default:
@@ -141,10 +194,8 @@ const Projects = () => {
     const downloadProject = async (projectId, format, event) => {
         const project = projects.find(p => p.id === projectId);
         if (project) {
-            const button = event.target;
-            const originalText = button.textContent;
-            button.textContent = '...'
-            button.disabled = true;
+            setProjectToDownload(projectId)
+            format.toLowerCase() == "giz" ? setLoadingGizOne(true) : setLoadingBmOne(true)
             try {
                 const response = await axios.get(`${apiUrl}/download-word-${format.toLowerCase()}/${project.id}`, {
                     responseType: 'blob',
@@ -162,8 +213,7 @@ const Projects = () => {
                     a.download = `projet_${project.nom_projet}_format_${format}.docx`;
                     setTimeout(() => {
 
-                        button.textContent = originalText;
-                        button.disabled = false;
+
                     }, 1000);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -175,16 +225,15 @@ const Projects = () => {
                 console.error('Erreur lors du téléchargement du fichier Word:', error);
                 showNotification(`Erreur lors du téléchargement du projet "${project.nom_projet}" au format ${format}`, 'error');
 
+            } finally {
+                format.toLowerCase() == "giz" ? setLoadingGizOne(false) : setLoadingBmOne(false)
             }
 
         }
     };
 
     const downloadAllProjectsGIZ = async (event) => {
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = '...'
-        button.disabled = true;
+        setLoadingWordGiz(true)
         try {
             const response = await axios.get(`${apiUrl}/download-word-giz`, {
                 responseType: 'blob',
@@ -202,8 +251,6 @@ const Projects = () => {
                 a.download = `liste_projets_format_GIZ.docx`;
                 setTimeout(() => {
 
-                    button.textContent = originalText;
-                    button.disabled = false;
                 }, 1000);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -215,39 +262,96 @@ const Projects = () => {
             console.error('Erreur lors du téléchargement du fichier Word:', error);
             showNotification(`Erreur lors du téléchargement des projets au format GIZ`, 'error');
 
+        } finally {
+            setLoadingWordGiz(false)
         }
 
 
     };
 
 
-    const downloadWordFile = async () => {
+    const downloadWordGizProjectSelected = async (event) => {
+        setLoadingGizSelectProjet(true)
+        try {
 
-    };
+            const response = await axios.get(`${apiUrl}/download-giz-projets-selected`, {
+                params: { ids: projectsSelected },// projectsSelected :tableaux comprenant l'ids des projet // 
+                responseType: 'blob',
+            });
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            });
 
-
-    const downloadAllWord = async (event) => {
-        const button = event.target;
-        const originalHtml = button.innerHTML;
-        button.innerHTML = '<span>⏳</span> Téléchargement...';
-        button.disabled = true;
-
-        setTimeout(() => {
-            button.innerHTML = '<span>✅</span> Téléchargé !';
             setTimeout(() => {
-                button.innerHTML = originalHtml;
-                button.disabled = false;
-            }, 2000);
-        }, 2000);
 
-        showNotification(`Téléchargement de ${filteredProjects.length} projets au format Word`, 'success');
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `liste_projets(${projectsSelected.length})_format_GIZ.docx`;
+                setTimeout(() => {
+
+
+                }, 1000);
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                showNotification(`Téléchargement des projets au format GIZ`, 'success');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Erreur lors du téléchargement du fichier Word:', error);
+            showNotification(`Erreur lors du téléchargement des projets au format GIZ`, 'error');
+
+        } finally {
+            setProjectsSelected([])
+            setLoadingGizSelectProjet(false)
+        }
     };
+
+    const downloadAllBmProjectSelected = async (event) => {
+        setLoadingBmSelectProjet(true)
+        try {
+            const response = await axios.get(`${apiUrl}/download-bm-projets-selected`, {
+                params: { ids: projectsSelected },
+                responseType: 'blob',
+            });
+
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            });
+
+            setTimeout(() => {
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `liste_projets(${projectsSelected.length})_format_BM.docx`;
+                setTimeout(() => {
+
+                }, 1000);
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                showNotification(`Téléchargement des projets au format Word`, 'success');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Erreur lors du téléchargement du fichier Word:', error);
+            showNotification(`Erreur lors du téléchargement des projets au format word`, 'error');
+
+        } finally {
+            setProjectsSelected([])
+            setLoadingBmSelectProjet(false)
+
+        }
+
+    }
+
+
+
 
     const downloadAllExcel = async (event) => {
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = '...'
-        button.disabled = true;
+        setLoadingExcel(true)
         try {
             const response = await axios.get(`${apiUrl}/download-excel`, {
                 responseType: 'blob',
@@ -265,8 +369,6 @@ const Projects = () => {
                 a.download = `Base_de_donnee_athari.xlsx`;
                 setTimeout(() => {
 
-                    button.textContent = originalText;
-                    button.disabled = false;
                 }, 1000);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -277,6 +379,9 @@ const Projects = () => {
         } catch (error) {
             console.error('Erreur lors du téléchargement du fichier Excel:', error);
             showNotification(`Erreur lors du téléchargement des projets au format Excel`, 'error');
+
+        } finally {
+            setLoadingExcel(false)
 
         }
 
@@ -292,7 +397,6 @@ const Projects = () => {
 
     const confirmDelete = async () => {
         if (projectToDelete) {
-
             try {
                 const res = await axios.delete(`${apiUrl}/projets/${projectToDelete.id}`)
                 setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
@@ -302,6 +406,26 @@ const Projects = () => {
                 setProjectToDelete(null);
             } catch (error) {
                 showNotification(`Erreur dans la suppression du projet "${projectToDelete.nom_projet}"`, 'error');
+            }
+        }
+    };
+
+    const confirmDeleteProjectSelected = async () => {
+        if (projectsSelected.length !== 0) {
+
+            try {
+                const res = await axios.delete(`${apiUrl}/delete-projets-selected`, {
+                    params: {
+                        ids: projectsSelected
+                    }
+                })
+                setProjects(prev => prev.filter(p => !projectsSelected.includes(p.id)))
+
+                showNotification(`Projets supprimés avec succès`, 'success');
+                setShowDeleteModalSelectProject(false);
+                setProjectsSelected([]);
+            } catch (error) {
+                showNotification(`Erreur dans la suppression des projets`, 'error');
             }
 
 
@@ -360,6 +484,35 @@ const Projects = () => {
         return pages;
     };
 
+    const handleAddProjetSelected = (isChecked, id) => {
+        if (isChecked) {
+            setProjectsSelected([...projectsSelected, id]);
+        } else {
+            setProjectsSelected(projectsSelected.filter(p => p !== id));
+        }
+    };
+
+    const checkAllProject = (isChecked) => {
+
+        if (isChecked) {
+            setProjectsSelected(projects.map(project => project.id))
+            setCheckedAllProjet(true)
+        } else {
+            setProjectsSelected([])
+            setCheckedAllProjet(false)
+
+        }
+    }
+
+    useEffect(() => {
+        if (projects.length !== projectsSelected.length) {
+            setCheckedAllProjet(false)
+        } else {
+            setCheckedAllProjet(true)
+        }
+    }, [projectsSelected.length === projects.length])
+    console.log(projectsSelected, checkedAllProjet)
+
     return (
         <Layout>
 
@@ -414,13 +567,17 @@ const Projects = () => {
                                 className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
                                 onClick={(e) => downloadAllProjectsGIZ(e)}
                             >
-                                <span><Download /></span> Télécharger Word (GIZ)
+                                <span><Download /></span> Télécharger Word (GIZ) {loadingWordGiz && (
+                                    <Loader2 className="w-6 h-6 animate-spin text-white mx-auto" />
+                                )}
                             </button>
                             <button
                                 className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
                                 onClick={downloadAllExcel}
                             >
-                                <span> <Download /></span> Télécharger Excel
+                                <span> <Download /></span> Télécharger Excel {loadingExcel && (
+                                    <Loader2 className="w-6 h-6 animate-spin text-white mx-auto" />
+                                )}
                             </button>
                             <Link
                                 className="bg-blue-500 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
@@ -454,11 +611,41 @@ const Projects = () => {
                             <span className="text-sm text-gray-600">par page</span>
                         </div>
                     </div>
+                    <div className={`px-6 py-3 ${projectsSelected.length != 0 ? 'flex' : 'hidden'} bg-blue-50 items-center justify-between`}>
+                        <div className='text-sm text-gray-500'>
+                            {projectsSelected.length} selectionnés
+                        </div>
+                        <div className='flex items-center justify-end gap-3'>
+                            <button
+                                className="bg-blue-200  hover:bg-blue-100 text-blue-500 text-sm px-2 py-1 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-1"
+                                onClick={(e) => downloadWordGizProjectSelected(e)}
+                            >
+                                <span><Download className='size-4' /></span> Télécharger GIZ ({projectsSelected.length}) {loadingGizSelectProjet && (
+                                    <Loader2 className="w-3 h-3 animate-spin text-blue-500 mx-auto" />
+                                )}
+                            </button>
+                            <button
+                                className="bg-green-200  hover:bg-green-100 text-green-500 text-sm px-2 py-1 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-1"
+                                onClick={(e) => downloadAllBmProjectSelected(e)}
+                            >
+                                <span> <Download className='size-4' /></span> Télécharger BM ({projectsSelected.length}) {loadingBmSelectProjet && (
+                                    <Loader2 className="w-3 h-3 animate-spin  mx-auto" />
+                                )}
+                            </button>
+                            <button
+                                className="bg-red-600 hover:bg-red-800 text-white text-sm px-2 py-1 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-1"
+                                onClick={(e) => setShowDeleteModalSelectProject(true)}
+                            >
+                                <span> <Delete className='size-4' /></span> Supprimé ({projectsSelected.length})
+                            </button>
+                        </div>
+                    </div>
 
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                                 <tr>
+                                    <th> <input type="checkbox" className='rounded-md' name="all_check" checked={checkedAllProjet} onClick={(e) => checkAllProject(e.target.checked)} /></th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Nom du Projet</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Client</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Ville</th>
@@ -468,65 +655,100 @@ const Projects = () => {
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {paginatedProjects.map(project => (
-                                    <tr key={project.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-gray-900">{project.nom_projet}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-700">{project.nom_client}</td>
-                                        <td className="px-6 py-4 text-gray-700">{project.ville}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-gray-600 text-sm">{project.adresse_client}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-700">{formatDate(project.date_debut)} </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-1">
-                                                <button
-                                                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-indigo-500"
-                                                    onClick={(e) => downloadProject(project.id, 'BM', e)}
-                                                    title="Télécharger format Banque Mondiale"
-                                                >
-                                                    BM
-                                                </button>
-                                                <button
-                                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-green-500"
-                                                    onClick={(e) => downloadProject(project.id, 'GIZ', e)}
-                                                    title="Télécharger format GIZ"
-                                                >
-                                                    GIZ
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-1">
-                                                <Link
-                                                    to={`/projets/${project.id}`}
-                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
+                            <tbody className="divide-y divide-gray-100 relative">
 
-
-                                                >
-                                                    <Eye className='size-4' />
-                                                </Link>
-                                                <Link
-                                                    to={`/projets/edit/${project.id}`}
-                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
-
-                                                >
-                                                    <Edit className='size-4' />
-
-                                                </Link>
-                                                <button
-                                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
-                                                    onClick={() => handleDeleteProject(project.id)}
-                                                    title="Supprimer le projet"
-                                                >
-                                                    <Delete className='size-4' />
-                                                </button>
+                                {loadingProject ? (
+                                    <tr className=" px-4 sm:px-6 lg:px-8 border w-full  top-0 inset-x-0 z-30 " >
+                                        <td className=" p-6 col-sapn-full" colSpan={7}>
+                                            <div className="flex justify-center items-center h-64">
+                                                <div className="text-center">
+                                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                                    <p className="text-gray-600">Chargement des projets...</p>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                ) :
+                                    paginatedProjects.map(project => (
+                                        <tr key={project.id} className="hover:bg-gray-50 transition-colors">
+                                            <td><input name='selected' type="checkbox" className='rounded-md' onClick={(e) => handleAddProjetSelected(e.target.checked, project.id)} checked={projectsSelected.includes(project.id)} /></td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-semibold text-gray-900">{project.nom_projet}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-700">{project.nom_client}</td>
+                                            <td className="px-6 py-4 text-gray-700">{project.ville}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-gray-600 text-sm">{project.adresse_client}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-700">{formatDate(project.date_debut)} </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-indigo-500"
+                                                        onClick={(e) => downloadProject(project.id, 'BM', e)}
+                                                        title="Télécharger format Banque Mondiale"
+                                                    >
+                                                        {(projectToDownload == project.id && loadingBmOne) ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white mx-auto" />
+                                                        ) : "BM"}
+                                                    </button>
+                                                    <button
+                                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-green-500"
+                                                        onClick={(e) => downloadProject(project.id, 'GIZ', e)}
+                                                        title="Télécharger format GIZ"
+                                                    >
+                                                        {(projectToDownload == project.id && loadingGizOne) ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin text-white mx-auto" />
+                                                        ) : "GIZ"}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex gap-1">
+                                                    {loadingUser ? '...' :
+
+
+                                                        currentUser.role == "admin" &&
+                                                        (
+                                                            <Link
+                                                                to={`/projets/edit/${project.id}`}
+                                                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
+
+                                                            >
+                                                                <Edit className='size-4' />
+
+                                                            </Link>
+                                                        )
+                                                    }
+                                                    <Link
+                                                        to={`/projets/${project.id}`}
+                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
+
+
+                                                    >
+                                                        <Eye className='size-4' />
+                                                    </Link>
+
+                                                    {loadingUser ? '...' :
+
+
+                                                        currentUser.role == "admin" &&
+                                                        (
+                                                            <button
+                                                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
+                                                                onClick={() => handleDeleteProject(project.id)}
+                                                                title="Supprimer le projet"
+                                                            >
+                                                                <Delete className='size-4' />
+                                                            </button>
+                                                        )
+                                                    }
+
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -607,6 +829,33 @@ const Projects = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal projets selectionne */}
+            {showDeleteModalSelectProject && (
+                <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+                    <div className="bg-white p-8 rounded-xl max-w-md w-11/12 text-center">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Confirmer la suppression</h3>
+                        <p className="text-gray-600 mb-8 leading-relaxed">
+                            Êtes-vous sûr de vouloir supprimer les projets selectionnés ? Cette action est irréversible.
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                                onClick={() => setShowDeleteModalSelectProject(false)}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                                onClick={confirmDeleteProjectSelected}
+                            >
+                                Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Notifications */}
             <div className="fixed top-4 right-4 z-50 space-y-2">

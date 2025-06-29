@@ -11,9 +11,34 @@ const ShowProject = () => {
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
-    //
     const apiUrl = import.meta.env.VITE_API_URL
+
+    const [currentUser, setCurrentUser] = useState(null)
+    const [loadingUser, setLoadingUser] = useState(true)
+
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const token = localStorage.getItem('token')
+                const res = await axios.get(`${apiUrl}/users/me`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+                )
+                setCurrentUser(res.data.user)
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération de l\'utilisateur :', error)
+                setCurrentUser(null)
+            } finally {
+                setLoadingUser(false)
+            }
+        }
+
+        fetchCurrentUser()
+    }, [])
 
     // Charger les données du projet
     useEffect(() => {
@@ -146,12 +171,19 @@ const ShowProject = () => {
                                     >
                                         Retour
                                     </button>
-                                    <button
-                                        onClick={handleEdit}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-                                    >
-                                        Modifier
-                                    </button>
+                                    {loadingUser ? '...' :
+
+                                        currentUser.role == "admin" &&
+                                        (
+                                            <button
+                                                onClick={handleEdit}
+                                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                                            >
+                                                Modifier
+                                            </button>
+                                        )
+                                    }
+
                                 </div>
                             </div>
                         </div>
