@@ -172,7 +172,7 @@ def download_one_bm_word(current_user, id):
     merged_cell = hdr_cells[0].merge(hdr_cells[1])
     
     # Mets du texte dans la cellule fusionnée
-    merged_cell.text = f"Mission {projet.id}"
+    merged_cell.text = f""
         
 
     # Centrage vertical
@@ -295,7 +295,7 @@ def downloadBmProjectsSelected(current_user):
             # LIGNE 0 - En-tête fusionné
             hdr_cells = table.rows[0].cells
             merged_cell = hdr_cells[0].merge(hdr_cells[1])
-            merged_cell.text = f"Mission {projet.id}"
+            merged_cell.text = f""
             
             # Centrage vertical et horizontal
             merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER

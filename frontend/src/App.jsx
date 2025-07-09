@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 import Home from './pages/Home.jsx'
-import Projects from './pages/projets/index.jsx';
+import Projects from './pages/projets/Index.jsx';
 import NotFound from './pages/NotFound.jsx';
 import CreateProject from './pages/projets/Create.jsx';
 import EditProject from './pages/projets/Edit.jsx';
