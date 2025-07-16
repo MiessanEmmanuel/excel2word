@@ -37,11 +37,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function highlight() {
-        dropArea.classList.add('border-blue-500', 'bg-blue-50');
+        dropArea.classList.add('border-secondary-back0', 'bg-secondary-back');
     }
 
     function unhighlight() {
-        dropArea.classList.remove('border-blue-500', 'bg-blue-50');
+        dropArea.classList.remove('border-secondary-back0', 'bg-secondary-back');
     }
 
     dropArea.addEventListener('drop', handleDrop, false);

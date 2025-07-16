@@ -77,11 +77,11 @@ const Register = () => {
 
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center px-4 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-primary-hover to-primary flex items-center justify-center px-4 py-8">
             <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
                 <div className="text-center mb-8">
                     <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <UserPlus className="w-8 h-8 text-blue-600" />
+                        <UserPlus className="w-8 h-8 text-primary" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">Créer un compte</h2>
                     <p className="text-gray-600 mt-2">Ajouter un membre</p>
@@ -113,7 +113,7 @@ const Register = () => {
                                 value={formData.nom}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all"
                                 placeholder="Nom complet"
                             />
                         </div>
@@ -132,7 +132,7 @@ const Register = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all"
                                 placeholder="son@email.com"
                             />
                         </div>
@@ -152,7 +152,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                                 minLength="6"
-                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all"
                                 placeholder="Minimum 6 caractères"
                             />
                             <button
@@ -176,7 +176,7 @@ const Register = () => {
                                     <label
                                         key={role.value}
                                         className={`relative flex items-center p-3 border rounded-lg cursor-pointer transition-all ${formData.role === role.value
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            ? 'border-secondary bg-secondary-back text-primary-hover'
                                             : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                     >
@@ -201,7 +201,7 @@ const Register = () => {
                         disabled={loading}
                         className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all ${loading
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                            : 'bg-primary hover:bg-primary-hover active:bg-blue-800'
                             }`}
                     >
                         {loading ? 'Création...' : 'Créer le compte'}
@@ -213,7 +213,7 @@ const Register = () => {
                         Déjà un compte ?{' '}
                         <Link
                             to="/login"
-                            className="text-blue-600 hover:text-blue-700 font-medium"
+                            className="text-primary hover:text-primary-hover font-medium"
                         >
                             Se connecter
                         </Link>

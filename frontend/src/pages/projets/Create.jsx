@@ -133,7 +133,7 @@ const CreateProject = () => {
                                             value={formData.nom_client}
                                             onChange={handleChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -145,7 +145,7 @@ const CreateProject = () => {
                                             name="ville"
                                             value={formData.ville}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -157,7 +157,7 @@ const CreateProject = () => {
                                             name="adresse_client"
                                             value={formData.adresse_client}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -169,7 +169,7 @@ const CreateProject = () => {
                                             name="contacts_client"
                                             value={formData.contacts_client}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                 </div>
@@ -189,7 +189,7 @@ const CreateProject = () => {
                                             value={formData.nom_projet}
                                             onChange={handleChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -201,7 +201,7 @@ const CreateProject = () => {
                                             name="domaine_expertise"
                                             value={formData.domaine_expertise}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -213,7 +213,7 @@ const CreateProject = () => {
                                             name="metier"
                                             value={formData.metier}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -225,7 +225,7 @@ const CreateProject = () => {
                                             name="pays"
                                             value={formData.pays}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                 </div>
@@ -239,7 +239,7 @@ const CreateProject = () => {
                                         value={formData.sous_domaines}
                                         onChange={handleChange}
                                         placeholder="Séparés par des virgules"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                     />
                                 </div>
 
@@ -252,7 +252,7 @@ const CreateProject = () => {
                                         name="desc_courte"
                                         value={formData.desc_courte}
                                         onChange={handleChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                     />
                                 </div>
 
@@ -265,7 +265,7 @@ const CreateProject = () => {
                                         value={formData.desc_longue}
                                         onChange={handleChange}
                                         rows={4}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                     />
                                 </div>
 
@@ -278,7 +278,7 @@ const CreateProject = () => {
                                         value={formData.desc_anglaise}
                                         onChange={handleChange}
                                         rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                     />
                                 </div>
 
@@ -291,7 +291,7 @@ const CreateProject = () => {
                                         value={formData.resultat_impact}
                                         onChange={handleChange}
                                         rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -309,7 +309,7 @@ const CreateProject = () => {
                                             name="contact_ressource"
                                             value={formData.contact_ressource}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -322,7 +322,7 @@ const CreateProject = () => {
                                             value={formData.equipe_projet}
                                             onChange={handleChange}
                                             placeholder="Noms séparés par des virgules"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -334,7 +334,7 @@ const CreateProject = () => {
                                             name="nb_employes_mission"
                                             value={formData.nb_employes_mission}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -346,7 +346,7 @@ const CreateProject = () => {
                                             name="consultants_associes"
                                             value={formData.consultants_associes}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -358,7 +358,7 @@ const CreateProject = () => {
                                             name="nb_employes_consultants"
                                             value={formData.nb_employes_consultants}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -370,7 +370,7 @@ const CreateProject = () => {
                                             name="cadres_societe"
                                             value={formData.cadres_societe}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                 </div>
@@ -389,7 +389,7 @@ const CreateProject = () => {
                                             name="date_debut"
                                             value={formData.date_debut}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -401,7 +401,7 @@ const CreateProject = () => {
                                             name="date_fin"
                                             value={formData.date_fin}
                                             onChange={handleChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                     <div>
@@ -414,7 +414,7 @@ const CreateProject = () => {
                                             value={formData.cout_projet}
                                             onChange={handleChange}
                                             placeholder="ex: 15 000 000 FCFA"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                         />
                                     </div>
                                 </div>
@@ -430,7 +430,7 @@ const CreateProject = () => {
                                             name="contient_documents"
                                             checked={formData.contient_documents}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-primary focus:ring-secondary border-gray-300 rounded"
                                         />
                                         <label className="ml-2 text-sm text-gray-700">
                                             Contient des documents
@@ -442,7 +442,7 @@ const CreateProject = () => {
                                             name="projet_confidentiel"
                                             checked={formData.projet_confidentiel}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-primary focus:ring-secondary border-gray-300 rounded"
                                         />
                                         <label className="ml-2 text-sm text-gray-700">
                                             Projet confidentiel
@@ -454,7 +454,7 @@ const CreateProject = () => {
                                             name="client_confidentiel"
                                             checked={formData.client_confidentiel}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-primary focus:ring-secondary border-gray-300 rounded"
                                         />
                                         <label className="ml-2 text-sm text-gray-700">
                                             Client confidentiel
@@ -474,7 +474,7 @@ const CreateProject = () => {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loading ? 'Création...' : 'Créer le projet'}
                                 </button>

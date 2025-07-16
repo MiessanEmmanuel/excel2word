@@ -32,7 +32,7 @@ const CustomAlert = ({ type, title, message, onClose, onConfirm, showConfirm = f
             case 'success': return <CheckCircle className="w-6 h-6 text-green-600" />;
             case 'error': return <AlertCircle className="w-6 h-6 text-red-600" />;
             case 'warning': return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
-            default: return <AlertCircle className="w-6 h-6 text-blue-600" />;
+            default: return <AlertCircle className="w-6 h-6 text-primary" />;
         }
     };
 
@@ -41,7 +41,7 @@ const CustomAlert = ({ type, title, message, onClose, onConfirm, showConfirm = f
             case 'success': return 'bg-green-50 border-green-200';
             case 'error': return 'bg-red-50 border-red-200';
             case 'warning': return 'bg-yellow-50 border-yellow-200';
-            default: return 'bg-blue-50 border-blue-200';
+            default: return 'bg-secondary-back border-blue-200';
         }
     };
 
@@ -70,7 +70,7 @@ const CustomAlert = ({ type, title, message, onClose, onConfirm, showConfirm = f
                         onClick={showConfirm ? onConfirm : onClose}
                         className={`px-4 py-2 rounded-lg text-white transition-colors ${type === 'error' || showConfirm
                             ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-blue-600 hover:bg-blue-700'
+                            : 'bg-primary hover:bg-primary-hover'
                             }`}
                     >
                         {showConfirm ? 'Confirmer' : 'OK'}
@@ -298,7 +298,7 @@ const AdminDashboard = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                     <p className="text-gray-600">Chargement du dashboard...</p>
                 </div>
             </div>
@@ -324,20 +324,9 @@ const AdminDashboard = () => {
 
                 {/* Statistiques */}
                 <div className='mb-5'>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">Statistiques de la plateforme</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">Gestion des utilisateurs</h3>
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="bg-white rounded-lg p-6 border-2 border-dashed border-gray-200">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="bg-blue-100 p-4 rounded-full">
-                                    <FolderOpen className="w-8 h-8 text-blue-600" />
-                                </div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-gray-900 mb-2">{stats}</div>
-                                <div className="text-gray-600">Total des projets</div>
-                            </div>
-                        </div>
-
+                        <h3 className="text-xl font-bold text-gray-700 mt-3">Profils utilisateurs</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white rounded-lg p-4 border border-gray-200">
                                 <div className="flex items-center mb-3">
@@ -365,10 +354,10 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-semibold text-gray-900">Gestion des utilisateurs</h3>
+                            <h3 className="text-xl font-semibold text-gray-700">Liste des utilisateurs</h3>
                             <button
                                 onClick={openCreateModal}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors flex items-center space-x-2"
                             >
                                 <UserPlus className="w-4 h-4" />
                                 <span>Ajouter un utilisateur</span>
@@ -386,7 +375,7 @@ const AdminDashboard = () => {
                                     placeholder="Rechercher un utilisateur..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                                 />
                             </div>
                         </div>
@@ -408,7 +397,7 @@ const AdminDashboard = () => {
                                             <td className="py-4 px-4">
                                                 <div className="flex items-center">
                                                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                                        <User className="w-4 h-4 text-blue-600" />
+                                                        <User className="w-4 h-4 text-primary" />
                                                     </div>
                                                     <span className="font-medium text-gray-900">{userItem.nom}</span>
                                                 </div>
@@ -426,7 +415,7 @@ const AdminDashboard = () => {
                                                 <div className="flex space-x-2">
                                                     <button
                                                         onClick={() => openEditModal(userItem)}
-                                                        className="text-blue-600 hover:text-blue-800 p-1"
+                                                        className="text-primary hover:text-blue-800 p-1"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
@@ -478,7 +467,7 @@ const AdminDashboard = () => {
                                     name="nom"
                                     value={userForm.nom}
                                     onChange={handleFormChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                                 />
                             </div>
 
@@ -489,7 +478,7 @@ const AdminDashboard = () => {
                                     name="email"
                                     value={userForm.email}
                                     onChange={handleFormChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                                 />
                             </div>
 
@@ -503,7 +492,7 @@ const AdminDashboard = () => {
                                         name="mot_de_passe"
                                         value={userForm.mot_de_passe}
                                         onChange={handleFormChange}
-                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                                     />
                                     <button
                                         type="button"
@@ -521,7 +510,7 @@ const AdminDashboard = () => {
                                     name="role"
                                     value={userForm.role}
                                     onChange={handleFormChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                                 >
                                     <option value="consultant">Consultant</option>
                                     <option value="admin">Administrateur</option>
@@ -537,7 +526,7 @@ const AdminDashboard = () => {
                                 </button>
                                 <button
                                     onClick={editingUser ? handleUpdateUser : handleCreateUser}
-                                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                                    className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-hover transition-colors flex items-center space-x-2"
                                 >
                                     <Save className="w-4 h-4" />
                                     <span>{editingUser ? 'Modifier' : 'Importer et continuer'}</span>

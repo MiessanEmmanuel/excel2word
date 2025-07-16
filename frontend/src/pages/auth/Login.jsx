@@ -59,11 +59,11 @@ const Login = () => {
 
     return (
 
-        <div className="min-h-screen bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-gradient-to-br from-primary-hover to-primary flex items-center justify-center px-4">
             <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
                 <div className="text-center mb-8">
                     <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <LogIn className="w-8 h-8 text-blue-600" />
+                        <LogIn className="w-8 h-8 text-primary" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">Connexion</h2>
                     <p className="text-gray-600 mt-2">Connectez-vous à votre compte</p>
@@ -89,7 +89,7 @@ const Login = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all"
                                 placeholder="votre@email.com"
                             />
                         </div>
@@ -108,7 +108,7 @@ const Login = () => {
                                 value={formData.mot_de_passe}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all"
                                 placeholder="Votre mot de passe"
                             />
                             <button
@@ -126,7 +126,7 @@ const Login = () => {
                         disabled={loading}
                         className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all ${loading
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+                            : 'bg-primary hover:bg-primary-hover active:bg-blue-800'
                             }`}
                     >
                         {loading ? 'Connexion...' : 'Se connecter'}
@@ -137,10 +137,10 @@ const Login = () => {
                     <p className="text-gray-600">
                         Pas encore de compte ?{' '}
                         <Link
-                            to="/register"
-                            className="text-blue-600 hover:text-blue-700 font-medium"
+                            to="/#"
+                            className="text-primary hover:text-primary-hover font-medium"
                         >
-                            Créer un compte
+                            Contactez l'administrateur
                         </Link>
                     </p>
                 </div>

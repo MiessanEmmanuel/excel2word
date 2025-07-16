@@ -8,7 +8,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt
+from docx.shared import Pt, RGBColor
 import pandas as pd
 from app.utils.token_required import token_required
 from app.utils.role_required import admin_required
@@ -105,7 +105,7 @@ def delete_projet(current_user, id):
 @token_required
 def deleteProjectsSelected(current_user):
     """
-    Télécharge plusieurs projets sélectionnés au format GIZ
+    Télécharge plusieurs projets sélectionnés au format FS
     Chaque projet est sur une page différente
     """
     # Récupérer les IDs des projets depuis les paramètres de requête
@@ -144,12 +144,27 @@ def deleteProjectsSelected(current_user):
     
     return jsonify({'message': 'Projet supprimé'}), 200
 
-
 @bp.route('/projets/stats', methods=['GET'])
 @token_required
 def stats(current_user):
-    projets_count = Projet.query.count()
-    return jsonify(projets_count), 200
+    projets = Projet.query.all()
+
+    stats = {
+        "total": 0,
+        "terminés": 0,
+        "en_cours": 0,
+        "à_venir": 0
+    }
+
+    for projet in projets:
+        statut = formatage_date(projet.date_debut, projet.date_fin)
+        stats["total"] += 1
+        if statut == "projet terminé":
+            stats["terminés"] += 1
+        elif statut == "projet en cours":
+            stats["en_cours"] += 1
+        elif statut == "projet à venir":
+            stats["à_venir"] += 1
 
 
 
@@ -164,7 +179,7 @@ def download_one_bm_word(current_user, id):
    
 
 
-    table = doc.add_table(rows=9, cols=2, style='Table Grid')
+    table = doc.add_table(rows=8, cols=2, style='Table Grid')
     # Récupère les cellules de la première ligne
     hdr_cells = table.rows[0].cells
 
@@ -186,51 +201,80 @@ def download_one_bm_word(current_user, id):
     run.bold = True
 
     # Appliquer un fond orange (code hex sans le #)
-    set_cell_background(merged_cell, "FF6600")  # Orange
+    set_cell_background(merged_cell, "3d8547")  # Vert Primary
     
-    
-    
+
+
     # LIGNE 1
     row_1 = table.rows[1].cells
-    row_1[0].text = f"Nom de la mission : {projet.nom_projet}"
-    row_1[1].text = f"Valeur approximative du contrat (en Francs CFA) : {projet.cout_projet} FCFA"
-    
-     # LIGNE 2
+    # Cellule gauche
+    p1_0 = row_1[0].paragraphs[0]
+    p1_0.add_run("Nom de la mission : ").bold = True
+    p1_0.add_run(f"{projet.nom_projet}")
+    # Cellule droite
+    p1_1 = row_1[1].paragraphs[0]
+    p1_1.add_run("Valeur du contrat (en francs CFA) : ").bold = True
+    p1_1.add_run(f"{format_cout_projet(projet.cout_projet)}")
+
+    # LIGNE 2
     row_2 = table.rows[2].cells
-    row_2[0].text = f"Pays: {projet.pays} \n Lieu: {projet.ville}"
-    row_2[1].text = f"Durée de la mission(mois) : { calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin) } "
-    
-     # LIGNE 3
+    # Cellule gauche
+    p2_0 = row_2[0].paragraphs[0]
+    p2_0.add_run("Pays : ").bold = True
+    p2_0.add_run(f"{projet.pays}\n")
+    p2_0.add_run("Lieu : ").bold = True
+    p2_0.add_run(f"{projet.ville}")
+    # Cellule droite
+    p2_1 = row_2[1].paragraphs[0]
+    p2_1.add_run("Durée de la mission (mois) : ").bold = True
+    p2_1.add_run(f"{calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin)} ")
+
+    # LIGNE 3
     row_3 = table.rows[3].cells
-    row_3[0].text = f"Nom du client: {projet.nom_client} "
-    row_3[1].text = f"Nombre total d'employés/mois ayant participé à la mission : { projet.nb_employes_mission } "
-    
+    # Cellule gauche
+    p3_0 = row_3[0].paragraphs[0]
+    p3_0.add_run("Nom du client : ").bold = True
+    p3_0.add_run(f"{projet.nom_client}")
+    # Cellule droite
+    p3_1 = row_3[1].paragraphs[0]
+    p3_1.add_run("Nombre total d'employés/mois ayant participé à la mission : ").bold = True
+    p3_1.add_run(f"{projet.nb_employes_mission}")
+
     # LIGNE 4
     row_4 = table.rows[4].cells
-    row_4[0].text = f"Adresse postale et géographique du client:  {projet.adresse_client} "
-    row_4[1].text = f"Valeur approximative des services offerts par votre consultant dans le cadre du contrat (en Francs CFA) : { projet.cout_projet } FCFA   "
-    
+    # Cellule gauche
+    p4_0 = row_4[0].paragraphs[0]
+    p4_0.add_run("Adresse : ").bold = True
+    p4_0.add_run(f"{projet.adresse_client}")
+    # Cellule droite fusionnée (ligne 4-5 col 1)
+    merge_cell_row_4 = row_4[1].merge(table.cell(5, 1))
+    p4_1 = merge_cell_row_4.paragraphs[0]
+    p4_1.add_run("Noms des cadres professionnels de votre société employés et fonctions exécutées : ").bold = True
+    p4_1.add_run(f"{projet.cadres_societe}")
+
     # LIGNE 5
     row_5 = table.rows[5].cells
-    row_5[0].text = f"Date de démarrage : {projet.date_debut} \n Date d’achèvement : {projet.date_fin}"
-    row_5[1].text = f"Nombre d'employés/mois fournis par les consultants associés : { projet.nb_employes_consultants }"
-    
+    p5_0 = row_5[0].paragraphs[0]
+    p5_0.add_run("Date de démarrage (mois/année) : ").bold = True
+    p5_0.add_run(f"{format_date_mois_annee(projet.date_debut)}\n")
+    p5_0.add_run("Date d’achèvement (mois/année) : ").bold = True
+    p5_0.add_run(f"{format_date_mois_annee(projet.date_fin)}")
+    # Ne rien écrire dans row_5[1], car elle est fusionnée
+
     # LIGNE 6
     row_6 = table.rows[6].cells
-    row_6[0].text = f"Noms des consultants associés/partenaires éventuels : {projet.consultants_associes}"
-    row_6[1].text = f"Noms des cadres professionnels de votre société employés et fonctions : { projet.cadres_societe }"
-    
+    merged_cell_6 = row_6[0].merge(row_6[1])
+    p6 = merged_cell_6.paragraphs[0]
+    p6.add_run("Description du projet : ").bold = True
+    p6.add_run(f"{projet.desc_courte}")
+
     # LIGNE 7
     row_7 = table.rows[7].cells
     merged_cell_7 = row_7[0].merge(row_7[1])
-    merged_cell_7.text = f"Description du projet : {projet.desc_courte}"
+    p7 = merged_cell_7.paragraphs[0]
+    p7.add_run("Description des services effectivement rendus par votre personnel dans le cadre de la mission : ").bold = True
+    p7.add_run(f"{projet.desc_longue}")
 
-
-    # LIGNE 8
-    row_8 = table.rows[8].cells
-    merged_cell_8 = row_8[0].merge(row_8[1])
-    merged_cell_8.text = f"Description des services fournis par le personnel : {projet.desc_longue}"
-    
 
 
     file_stream = BytesIO()
@@ -290,7 +334,7 @@ def downloadBmProjectsSelected(current_user):
                 doc.add_page_break()
             
             # Créer le tableau pour ce projet
-            table = doc.add_table(rows=9, cols=2, style='Table Grid')
+            table = doc.add_table(rows=8, cols=2, style='Table Grid')
             
             # LIGNE 0 - En-tête fusionné
             hdr_cells = table.rows[0].cells
@@ -306,48 +350,81 @@ def downloadBmProjectsSelected(current_user):
             run.bold = True
             
             # Appliquer un fond orange
-            set_cell_background(merged_cell, "FF6600")
+            set_cell_background(merged_cell, "3d8547")
             
+         
+
             # LIGNE 1
             row_1 = table.rows[1].cells
-            row_1[0].text = f"Nom de la mission : {projet.nom_projet}"
-            row_1[1].text = f"Valeur approximative du contrat (en Francs CFA) : {projet.cout_projet} FCFA"
-            
+            # Cellule gauche
+            p1_0 = row_1[0].paragraphs[0]
+            p1_0.add_run("Nom de la mission : ").bold = True
+            p1_0.add_run(f"{projet.nom_projet}")
+            # Cellule droite
+            p1_1 = row_1[1].paragraphs[0]
+            p1_1.add_run("Valeur du contrat (en francs CFA) : ").bold = True
+            p1_1.add_run(f"{format_cout_projet(projet.cout_projet)}")
+
             # LIGNE 2
             row_2 = table.rows[2].cells
-            row_2[0].text = f"Pays: {projet.pays} \n Lieu: {projet.ville}"
-            row_2[1].text = f"Durée de la mission(mois) : {calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin)}"
-            
+            # Cellule gauche
+            p2_0 = row_2[0].paragraphs[0]
+            p2_0.add_run("Pays : ").bold = True
+            p2_0.add_run(f"{projet.pays}\n")
+            p2_0.add_run("Lieu : ").bold = True
+            p2_0.add_run(f"{projet.ville}")
+            # Cellule droite
+            p2_1 = row_2[1].paragraphs[0]
+            p2_1.add_run("Durée de la mission (mois) : ").bold = True
+            p2_1.add_run(f"{calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin)}")
+
             # LIGNE 3
             row_3 = table.rows[3].cells
-            row_3[0].text = f"Nom du client: {projet.nom_client}"
-            row_3[1].text = f"Nombre total d'employés/mois ayant participé à la mission : {projet.nb_employes_mission}"
-            
+            # Cellule gauche
+            p3_0 = row_3[0].paragraphs[0]
+            p3_0.add_run("Nom du client : ").bold = True
+            p3_0.add_run(f"{projet.nom_client}")
+            # Cellule droite
+            p3_1 = row_3[1].paragraphs[0]
+            p3_1.add_run("Nombre total d'employés/mois ayant participé à la mission : ").bold = True
+            p3_1.add_run(f"{projet.nb_employes_mission}")
+
             # LIGNE 4
             row_4 = table.rows[4].cells
-            row_4[0].text = f"Adresse postale et géographique du client: {projet.adresse_client}"
-            row_4[1].text = f"Valeur approximative des services offerts par votre consultant dans le cadre du contrat (en Francs CFA) : {projet.cout_projet} FCFA"
-            
+            # Cellule gauche
+            p4_0 = row_4[0].paragraphs[0]
+            p4_0.add_run("Adresse : ").bold = True
+            p4_0.add_run(f"{projet.adresse_client}")
+            # Cellule droite fusionnée (ligne 4-5 col 1)
+            merge_cell_row_4 = row_4[1].merge(table.cell(5, 1))
+            p4_1 = merge_cell_row_4.paragraphs[0]
+            p4_1.add_run("Noms des cadres professionnels de votre société employés et fonctions exécutées : ").bold = True
+            p4_1.add_run(f"{projet.cadres_societe}")
+
             # LIGNE 5
             row_5 = table.rows[5].cells
-            row_5[0].text = f"Date de démarrage : {projet.date_debut} \n Date d'achèvement : {projet.date_fin}"
-            row_5[1].text = f"Nombre d'employés/mois fournis par les consultants associés : {projet.nb_employes_consultants}"
-            
+            p5_0 = row_5[0].paragraphs[0]
+            p5_0.add_run("Date de démarrage (mois/année) : ").bold = True
+            p5_0.add_run(f"{format_date_mois_annee(projet.date_debut)}\n")
+            p5_0.add_run("Date d’achèvement (mois/année) : ").bold = True
+            p5_0.add_run(f"{format_date_mois_annee(projet.date_fin)}")
+            # Ne rien écrire dans row_5[1], car elle est fusionnée
+
             # LIGNE 6
             row_6 = table.rows[6].cells
-            row_6[0].text = f"Noms des consultants associés/partenaires éventuels : {projet.consultants_associes}"
-            row_6[1].text = f"Noms des cadres professionnels de votre société employés et fonctions : {projet.cadres_societe}"
-            
-            # LIGNE 7 - Description du projet (cellules fusionnées)
+            merged_cell_6 = row_6[0].merge(row_6[1])
+            p6 = merged_cell_6.paragraphs[0]
+            p6.add_run("Description du projet : ").bold = True
+            p6.add_run(f"{projet.desc_courte}")
+
+            # LIGNE 7
             row_7 = table.rows[7].cells
             merged_cell_7 = row_7[0].merge(row_7[1])
-            merged_cell_7.text = f"Description du projet : {projet.desc_courte}"
-            
-            # LIGNE 8 - Description des services (cellules fusionnées)
-            row_8 = table.rows[8].cells
-            merged_cell_8 = row_8[0].merge(row_8[1])
-            merged_cell_8.text = f"Description des services fournis par le personnel : {projet.desc_longue}"
-            
+            p7 = merged_cell_7.paragraphs[0]
+            p7.add_run("Description des services effectivement rendus par votre personnel dans le cadre de la mission : ").bold = True
+            p7.add_run(f"{projet.desc_longue}")
+
+
         except Exception as e:
             print(f"Erreur lors du traitement du projet {project_id}: {str(e)}")
             continue
@@ -368,9 +445,9 @@ def downloadBmProjectsSelected(current_user):
 
 
 
-@bp.route('/download-word-giz/<int:id>')
+@bp.route('/download-word-fs/<int:id>')
 @token_required
-def download_one_giz_word(current_user,id):
+def download_one_fs_word(current_user,id):
     doc = Document()
     # Exemple de données
     projet = Projet.query.get_or_404(id)
@@ -379,53 +456,31 @@ def download_one_giz_word(current_user,id):
    
 
 
-    table = doc.add_table(rows=3, cols=4, style='Table Grid')
-    # Récupère les cellules de la première ligne
-    hdr_cells = table.rows[0].cells
+    table = doc.add_table(rows=2, cols=5, style='Table Grid')
 
-    # Fusionne les 4 cellules en une seule (de la cellule 0 à la cellule 2)
-    merged_cell = hdr_cells[0].merge(hdr_cells[1]).merge(hdr_cells[2]).merge(hdr_cells[3])
-    
-    # Mets du texte dans la cellule fusionnée
-    merged_cell.text = f" "
-        
-
-    # Centrage vertical
-    merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    
-    
-    paragraph = merged_cell.paragraphs[0]
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = paragraph.runs[0]
-    run.font.size = Pt(12)
-    run.bold = True
-
-    # Appliquer un fond orange (code hex sans le #)
-    set_cell_background(merged_cell, "FF6600")  # Orange
-    
-    
-    
+    #============ remaniement la ligne corresponds à l'index 0 (seulement pour les Format de synthèse)===============
     # LIGNE 1
-    row_1 = table.rows[1].cells
-    row_1[0].text = f"Durée de la mission"
-    row_1[1].text = f"Désignation de la mission / description brève des principaux livrables/produits"
-    row_1[2].text = f"Nom du Client -Pays concernés-"
-    row_1[3].text = f"Nom des cadres professionnels de la société employés et fonctions exécutées"
-    
-    
-    for row in row_1:
-        set_cell_background(row, "08CC0A")  # vert
-        paragraph_row_1 = row.paragraphs[0]
-        run = paragraph_row_1.runs[0]
+    row_1 = table.rows[0].cells
+    headers = ["Date", "Nom du client", "Nom de la mission", "Brève description", "Valeur du contrat"]
+
+    for i, text in enumerate(headers):
+        cell = row_1[i]
+        set_cell_background(cell, "3d8547")  # vert
+        paragraph = cell.paragraphs[0]
+        paragraph.clear()  # Nettoyer le paragraphe
+        run = paragraph.add_run(text)
         run.bold = True
+        run.font.color.rgb = RGBColor(255, 255, 255)  # Blanc
 
     
      # LIGNE 2
-    row_2 = table.rows[2].cells
-    row_2[0].text = f"{ calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin) } mois"
-    row_2[1].text = f"{ projet.nom_projet } / {projet.desc_courte} / "
-    row_2[2].text = f"{ projet.nom_client } - {projet.pays} "
-    row_2[3].text = f"{ projet.cadres_societe }"
+    row_2 = table.rows[1].cells
+    row_2[0].text = f"{format_date_mois_annee(projet.date_debut) } - {format_date_mois_annee(projet.date_fin)}"
+    row_2[1].text = f"{ projet.nom_client }"
+    row_2[2].text = f"{ projet.nom_projet }"
+    row_2[3].text = f"{ projet.desc_courte }"
+    row_2[4].text = f"{ format_cout_projet(projet.cout_projet) }"
+    
     
     
 
@@ -436,15 +491,15 @@ def download_one_giz_word(current_user,id):
     return send_file(
         file_stream,
         as_attachment=True,
-        download_name=f"projet_{projet.nom_projet}_format_GIZ.docx",
+        download_name=f"projet_{projet.nom_projet}_format_FS.docx",
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
-@bp.route('/download-giz-projets-selected', methods=["GET", "POST"])
+@bp.route('/download-fs-projets-selected', methods=["GET", "POST"])
 @token_required
-def downloadGizProjectsSelected(current_user):
+def downloadFsProjectsSelected(current_user):
     """
-    Télécharge plusieurs projets sélectionnés au format GIZ
+    Télécharge plusieurs projets sélectionnés au format FS
     Chaque projet est sur une page différente
     """
     # Récupérer les IDs des projets depuis les paramètres de requête
@@ -482,46 +537,32 @@ def downloadGizProjectsSelected(current_user):
             if index > 0:
                 doc.add_page_break()
             
-            # Créer le tableau pour ce projet (3 lignes, 4 colonnes)
-            table = doc.add_table(rows=3, cols=4, style='Table Grid')
-            
-            # LIGNE 0 - En-tête fusionné
-            hdr_cells = table.rows[0].cells
-            # Fusionner les 4 cellules
-            merged_cell = hdr_cells[0].merge(hdr_cells[1]).merge(hdr_cells[2]).merge(hdr_cells[3])
-            merged_cell.text = " "  # Espace vide comme dans l'original
-            
-            # Centrage vertical et horizontal
-            merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-            paragraph = merged_cell.paragraphs[0]
-            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run = paragraph.runs[0]
-            run.font.size = Pt(12)
-            run.bold = True
-            
-            # Appliquer un fond orange
-            set_cell_background(merged_cell, "FF6600")
-            
-            # LIGNE 1 - En-têtes des colonnes
-            row_1 = table.rows[1].cells
-            row_1[0].text = "Durée de la mission"
-            row_1[1].text = "Désignation de la mission / description brève des principaux livrables/produits"
-            row_1[2].text = "Nom du Client -Pays concernés-"
-            row_1[3].text = "Nom des cadres professionnels de la société employés et fonctions exécutées"
-            
-            # Appliquer le style aux en-têtes
-            for cell in row_1:
-                set_cell_background(cell, "08CC0A")  # Vert
-                paragraph_row_1 = cell.paragraphs[0]
-                run = paragraph_row_1.runs[0]
+            # Créer le tableau pour ce projet (3 lignes, 5 colonnes)
+                    
+            table = doc.add_table(rows=2, cols=5, style='Table Grid')
+
+            #============ remaniement la ligne corresponds à l'index 0 (seulement pour les Format de synthèse)===============
+            # LIGNE 1
+            row_1 = table.rows[0].cells
+            headers = ["Date", "Nom du client", "Nom de la mission", "Brève description", "Valeur du contrat"]
+
+            for i, text in enumerate(headers):
+                cell = row_1[i]
+                set_cell_background(cell, "3d8547")  # vert
+                paragraph = cell.paragraphs[0]
+                paragraph.clear()  # Nettoyer le paragraphe
+                run = paragraph.add_run(text)
                 run.bold = True
+                run.font.color.rgb = RGBColor(255, 255, 255)  # Blanc
+
             
-            # LIGNE 2 - Données du projet
-            row_2 = table.rows[2].cells
-            row_2[0].text = f"{calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin)} mois"
-            row_2[1].text = f"{projet.nom_projet} / {projet.desc_courte} / "
-            row_2[2].text = f"{projet.nom_client} - {projet.pays}"
-            row_2[3].text = f"{projet.cadres_societe}"
+            # LIGNE 2
+            row_2 = table.rows[1].cells
+            row_2[0].text = f"{format_date_mois_annee(projet.date_debut) } - {format_date_mois_annee(projet.date_fin)}"
+            row_2[1].text = f"{ projet.nom_client }"
+            row_2[2].text = f"{ projet.nom_projet }"
+            row_2[3].text = f"{ projet.desc_courte }"
+            row_2[4].text = f"{ format_cout_projet(projet.cout_projet) }"
             
         except Exception as e:
             print(f"Erreur lors du traitement du projet {project_id}: {str(e)}")
@@ -536,71 +577,45 @@ def downloadGizProjectsSelected(current_user):
     return send_file(
         file_stream,
         as_attachment=True,
-        download_name=f"projets_selection_{len(project_ids)}_format_GIZ.docx",
+        download_name=f"projets_selection_{len(project_ids)}_format_FS.docx",
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
 
-@bp.route('/download-word-giz')
+@bp.route('/download-word-fs')
 @token_required
-def download_all_giz_word(current_user):
+def download_all_fs_word(current_user):
     doc = Document()
     # Exemple de données
     projets = Projet.query.all()
     
-    print(projets)
-   
-    nb_rows_table = len(projets)  + 2
 
-    table = doc.add_table(rows=nb_rows_table, cols=4, style='Table Grid')
-    # Récupère les cellules de la première ligne
-    hdr_cells = table.rows[0].cells
+    nb_ligne_a_ajouter = 1
+    nb_rows_table = len(projets)  + nb_ligne_a_ajouter
 
-    # Fusionne les 4 cellules en une seule (de la cellule 0 à la cellule 2)
-    merged_cell = hdr_cells[0].merge(hdr_cells[1]).merge(hdr_cells[2]).merge(hdr_cells[3])
+    table = doc.add_table(rows=nb_rows_table, cols=5, style='Table Grid')
     
-    # Mets du texte dans la cellule fusionnée
-    merged_cell.text = f" "
-        
+    row_1 = table.rows[0].cells
 
-    # Centrage vertical
-    merged_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    
-    
-    paragraph = merged_cell.paragraphs[0]
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = paragraph.runs[0]
-    run.font.size = Pt(12)
-    run.bold = True
+    headers = ["Date", "Nom du client", "Nom de la mission", "Brève description", "Valeur du contrat"]
 
-    # Appliquer un fond orange (code hex sans le #)
-    set_cell_background(merged_cell, "FF6600")  # Orange
-    
-    
-    
-    # LIGNE 1
-    row_1 = table.rows[1].cells
-    row_1[0].text = f"Durée de la mission"
-    row_1[1].text = f"Désignation de la mission / description brève des principaux livrables/produits"
-    row_1[2].text = f"Nom du Client -Pays concernés-"
-    row_1[3].text = f"Nom des cadres professionnels de la société employés et fonctions exécutées"
-    
-    
-    for row in row_1:
-        set_cell_background(row, "08CC0A")  # vert
-        paragraph_row_1 = row.paragraphs[0]
-        run = paragraph_row_1.runs[0]
+    for i, text in enumerate(headers):
+        cell = row_1[i]
+        set_cell_background(cell, "3d8547")  # vert
+        paragraph = cell.paragraphs[0]
+        paragraph.clear()  # Nettoyer le paragraphe
+        run = paragraph.add_run(text)
         run.bold = True
-    
-    for index, projet in enumerate(projets, start=2):
+        run.font.color.rgb = RGBColor(255, 255, 255)  # Blanc
+        
+    for index, projet in enumerate(projets, start=nb_ligne_a_ajouter):
         row_table = table.rows[index].cells
-        row_table[0].text = f"{ calcul_duree_mission_en_mois(projet.date_debut, projet.date_fin) } mois"
-        row_table[1].text = f"{ projet.nom_projet } / {projet.desc_courte} / "
-        row_table[2].text = f"{ projet.nom_client } - {projet.pays} "
-        row_table[3].text = f"{ projet.cadres_societe }"
+        row_table[0].text = f"{format_date_mois_annee(projet.date_debut) } - {format_date_mois_annee(projet.date_fin)}"
+        row_table[1].text = f"{ projet.nom_client }"
+        row_table[2].text = f"{ projet.nom_projet }"
+        row_table[3].text = f"{ format_cout_projet(projet.cout_projet) }"
         
         
-    
     file_stream = BytesIO()
     doc.save(file_stream)
     file_stream.seek(0)
@@ -609,7 +624,7 @@ def download_all_giz_word(current_user):
     return send_file(
         file_stream,
         as_attachment=True,
-        download_name=f"liste_projets_format_GIZ.docx",
+        download_name=f"liste_projets_format_FS.docx",
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
@@ -723,7 +738,7 @@ def download_all_excel_old_format(current_user):
             'bold': True,
             'text_wrap': True,
             'valign': 'top',
-            'fg_color': '#FF6600',  # orange
+            'fg_color': '#3d8547',  # orange
             'border': 1
         })
         
@@ -824,8 +839,23 @@ def calcul_duree_mission_en_mois(date_debut, date_fin):
     if end.day >= start.day:
         mois += 1
     
-    return max(0, mois)  # on évite les durées négatives
-    
+    return f"{max(0, mois)} mois"  # on évite les durées négatives
+ 
+
+def format_cout_projet(cout_projet):
+    try:
+        montant = float(cout_projet)
+        montant = int(montant)
+        return f"{montant:,} FCFA".replace(",", " ")  # format avec espace tous les milliers
+    except (ValueError, TypeError):
+        return str(cout_projet)
+
+def format_date_mois_annee(date_val):
+    try:
+        return date_val.strftime("%m/%Y")
+    except AttributeError:
+        return str(date_val)
+   
 
 def set_cell_background(cell, color_hex):
     tc = cell._tc
@@ -839,6 +869,20 @@ def autoriser_typ_fichiers(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in EXTENSIONS_AUTORISEE
 
 
+
+def formatage_date(date_debut, date_fin):
+    aujourd_hui = datetime.today().date()
+    debut = datetime.strptime(date_debut, "%Y-%m-%d").date()
+    fin = datetime.strptime(date_fin, "%Y-%m-%d").date()
+
+    if fin < aujourd_hui:
+        return "projet terminé"
+    elif debut > aujourd_hui:
+        return "projet à venir"
+    else:
+        return "projet en cours"
+
+
 def safe_int(value):
     try:
         if pd.isna(value):
@@ -846,6 +890,7 @@ def safe_int(value):
         return int(float(value))  # permet aussi de convertir "3.0" en 3
     except (ValueError, TypeError):
         return None
+
 
 def safe_str(value):
     return str(value).strip() if pd.notna(value) else None

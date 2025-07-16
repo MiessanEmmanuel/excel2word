@@ -85,7 +85,7 @@ const ShowProject = () => {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                             <div className="flex justify-center items-center h-64">
                                 <div className="text-center">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                                     <p className="text-gray-600">Chargement du projet...</p>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@ const ShowProject = () => {
                                 <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
                                 <button
                                     onClick={handleBack}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                                    className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover"
                                 >
                                     Retour
                                 </button>
@@ -177,7 +177,7 @@ const ShowProject = () => {
                                         (
                                             <button
                                                 onClick={handleEdit}
-                                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                                                className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-hover"
                                             >
                                                 Modifier
                                             </button>
@@ -256,8 +256,8 @@ const ShowProject = () => {
 
                                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
                                     {project.nb_employes_mission && (
-                                        <div className="text-center p-3 bg-blue-50 rounded-md">
-                                            <div className="text-2xl font-bold text-blue-600">{project.nb_employes_mission}</div>
+                                        <div className="text-center p-3 bg-secondary-back rounded-md">
+                                            <div className="text-2xl font-bold text-primary">{project.nb_employes_mission}</div>
                                             <div className="text-sm text-blue-800">Employés Mission</div>
                                         </div>
                                     )}

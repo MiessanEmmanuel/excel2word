@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, roles = null }) => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
                     <p className="text-gray-600">Vérification de l'authentification...</p>
                 </div>
             </div>
@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children, roles = null }) => {
                         </p>
                         <button
                             onClick={() => window.history.back()}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors"
                         >
                             Retour
                         </button>

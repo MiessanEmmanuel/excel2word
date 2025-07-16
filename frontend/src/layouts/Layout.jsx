@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 const Layout = ({ children }) => {
     const { logout, isAuthenticated, user } = useAuth()
 
+    const location = useLocation();
+
     const [currentUser, setCurrentUser] = useState(null)
     const [loadingUser, setLoadingUser] = useState(true)
     const [showDropdown, setShowDropdown] = useState(false)
@@ -54,15 +56,15 @@ const Layout = ({ children }) => {
     return (
         <>
 
-            <nav className="bg-blue-600 text-white shadow-lg">
+            <nav className="bg-primary text-white shadow-lg">
                 <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-                    <div className="font-bold text-xl">Athari</div>
+                    <div className="font-bold text-xl">Athari Quals</div>
                     <div className="flex items-center">
 
-                        <Link to="/" className="hover:text-blue-200 transition duration-300 mr-4">
+                        <Link to="/" className={`hover:text-tertiary transition duration-300 mr-4 ${location.pathname == "/" ? "text-tertiary" : ""}`}>
                             <i className="fas fa-home"></i> Accueil
                         </Link>
-                        <Link to="/projets" className="hover:text-blue-200 transition duration-300 mr-4">
+                        <Link to="/projets" className={`hover:text-tertiary transition duration-300 mr-4 ${location.pathname == "/projets" ? "text-tertiary" : ""}`}>
                             <i className="fa-solid fa-database"></i> Projets
                         </Link>
                         {loadingUser ? <Loader2 className='size-5 animate-spin ' /> :
@@ -70,14 +72,14 @@ const Layout = ({ children }) => {
                                 currentUser.role == "admin" ?
                                     (
                                         <div className='relative'>
-                                            <button onClick={() => setShowDropdown(!showDropdown)} className="bg-white hover:bg-gray-100 px-4 py-1 rounded-md text-black hover:text-black transition duration-300 mr-4 group">
-                                                Dashboard
+                                            <button onClick={() => setShowDropdown(!showDropdown)} className={`bg-white hover:bg-gray-200 px-4 py-1 rounded-md text-black hover:text-black transition duration-300 mr-4 group`}>
+                                                Admin
                                                 {showDropdown && (
                                                     <>
-                                                        <div class=" absolute -bottom-0  left-[50%] -translate-x-[50%] translate-y-[50%]  flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 fill-white text-white group-hover:fill-gray-100 group-hover:text-gray-100 transition duration-300" viewBox="0 0 24 24"><path d="M12 16l-6-6h12l-6 6z"></path></svg></div>
+                                                        <div class=" absolute -bottom-0  left-[50%] -translate-x-[50%] translate-y-[50%]  flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 fill-white text-white group-hover:fill-gray-200 group-hover:text-gray-100 transition duration-300" viewBox="0 0 24 24"><path d="M12 16l-6-6h12l-6 6z"></path></svg></div>
                                                         <div className='bg-white/70 rounded-md text-gray-700 py-2 flex flex-col divide-y absolute left-[50%] -translate-x-[50%]  translate-y-[10px] border backdrop-blur-lg'>
-                                                            <Link to="/admin" className="hover:bg-blue-100 px-3 py-1 text-sm transition duration-300">
-                                                                Dashboard
+                                                            <Link to="/admin" className="hover:bg-tertiary/30 px-3 py-1 text-sm transition duration-300">
+                                                                Gestion des utilisateurs
                                                             </Link>
                                                             <button className='hover:bg-red-100 whitespace-nowrap text-red-500 px-3 py-1 text-sm transition duration-300' onClick={logout}>Se Déconnecter</button>
                                                         </div>

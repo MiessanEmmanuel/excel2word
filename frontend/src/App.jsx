@@ -51,9 +51,9 @@ function App() {
 
       } />
       <Route path="/register" element={
-        <FreeRoute >
+        <ProtectedRoute >
           <Register />
-        </FreeRoute>
+        </ProtectedRoute>
       }
       />
       <Route path="/login" element={

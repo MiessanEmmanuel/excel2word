@@ -19,14 +19,14 @@ const Projects = () => {
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [loadingProject, setLoading] = useState(true);
-    const [loadingWordGiz, setLoadingWordGiz] = useState(false);
+    const [loadingWordFs, setLoadingWordFs] = useState(false);
     const [loadingExcel, setLoadingExcel] = useState(false);
-    const [loadingGizOne, setLoadingGizOne] = useState(false);
+    const [loadingFsOne, setLoadingFsOne] = useState(false);
     const [loadingBmOne, setLoadingBmOne] = useState(false);
     const [projectToDownload, setProjectToDownload] = useState(null);
 
     const [loadingBmSelectProjet, setLoadingBmSelectProjet] = useState(false);
-    const [loadingGizSelectProjet, setLoadingGizSelectProjet] = useState(false);
+    const [loadingFsSelectProjet, setLoadingFsSelectProjet] = useState(false);
 
 
 
@@ -150,13 +150,22 @@ const Projects = () => {
 
     // Statistics
     const stats = useMemo(() => {
-        const activeProjects = filteredProjects.filter(p => p.statut === 'Actif').length;
+        const ProjectsTermines = filteredProjects.filter(p => formatage_date(p.date_debut, p.date_fin) === 'Terminés').length;
+        const ProjectsEnCours = filteredProjects.filter(p => formatage_date(p.date_debut, p.date_fin) === 'En cours').length;
+        const ProjectsAVenir = filteredProjects.filter(p => formatage_date(p.date_debut, p.date_fin) === 'À venir').length;
+
+
+        const activeProjects = filteredProjects.filter(p => p.date_debut == 'Actif').length;
+
         const uniqueClients = new Set(filteredProjects.map(p => p.nom_client));
 
         return {
             total: filteredProjects.length,
             active: activeProjects,
-            clients: uniqueClients.size
+            clients: uniqueClients.size,
+            ProjectsEnCours: ProjectsEnCours,
+            ProjectsTermines: ProjectsTermines,
+            ProjectsAVenir: ProjectsAVenir
         };
     }, [filteredProjects]);
 
@@ -195,7 +204,7 @@ const Projects = () => {
         const project = projects.find(p => p.id === projectId);
         if (project) {
             setProjectToDownload(projectId)
-            format.toLowerCase() == "giz" ? setLoadingGizOne(true) : setLoadingBmOne(true)
+            format.toLowerCase() == "fs" ? setLoadingFsOne(true) : setLoadingBmOne(true)
             try {
                 const response = await axios.get(`${apiUrl}/download-word-${format.toLowerCase()}/${project.id}`, {
                     responseType: 'blob',
@@ -226,16 +235,16 @@ const Projects = () => {
                 showNotification(`Erreur lors du téléchargement du projet "${project.nom_projet}" au format ${format}`, 'error');
 
             } finally {
-                format.toLowerCase() == "giz" ? setLoadingGizOne(false) : setLoadingBmOne(false)
+                format.toLowerCase() == "fs" ? setLoadingFsOne(false) : setLoadingBmOne(false)
             }
 
         }
     };
 
-    const downloadAllProjectsGIZ = async (event) => {
-        setLoadingWordGiz(true)
+    const downloadAllProjectsFS = async (event) => {
+        setLoadingWordFs(true)
         try {
-            const response = await axios.get(`${apiUrl}/download-word-giz`, {
+            const response = await axios.get(`${apiUrl}/download-word-fs`, {
                 responseType: 'blob',
             });
 
@@ -248,33 +257,33 @@ const Projects = () => {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `liste_projets_format_GIZ.docx`;
+                a.download = `liste_projets_format_FS.docx`;
                 setTimeout(() => {
 
                 }, 1000);
                 a.click();
                 window.URL.revokeObjectURL(url);
 
-                showNotification(`Téléchargement des projets au format GIZ`, 'success');
+                showNotification(`Téléchargement des projets au format FS`, 'success');
             }, 1500);
 
         } catch (error) {
             console.error('Erreur lors du téléchargement du fichier Word:', error);
-            showNotification(`Erreur lors du téléchargement des projets au format GIZ`, 'error');
+            showNotification(`Erreur lors du téléchargement des projets au format FS`, 'error');
 
         } finally {
-            setLoadingWordGiz(false)
+            setLoadingWordFs(false)
         }
 
 
     };
 
 
-    const downloadWordGizProjectSelected = async (event) => {
-        setLoadingGizSelectProjet(true)
+    const downloadWordFsProjectSelected = async (event) => {
+        setLoadingFsSelectProjet(true)
         try {
 
-            const response = await axios.get(`${apiUrl}/download-giz-projets-selected`, {
+            const response = await axios.get(`${apiUrl}/download-fs-projets-selected`, {
                 params: { ids: projectsSelected },// projectsSelected :tableaux comprenant l'ids des projet // 
                 responseType: 'blob',
             });
@@ -287,7 +296,7 @@ const Projects = () => {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `liste_projets(${projectsSelected.length})_format_GIZ.docx`;
+                a.download = `liste_projets(${projectsSelected.length})_format_FS.docx`;
                 setTimeout(() => {
 
 
@@ -295,16 +304,16 @@ const Projects = () => {
                 a.click();
                 window.URL.revokeObjectURL(url);
 
-                showNotification(`Téléchargement des projets au format GIZ`, 'success');
+                showNotification(`Téléchargement des projets au format FS`, 'success');
             }, 1500);
 
         } catch (error) {
             console.error('Erreur lors du téléchargement du fichier Word:', error);
-            showNotification(`Erreur lors du téléchargement des projets au format GIZ`, 'error');
+            showNotification(`Erreur lors du téléchargement des projets au format FS`, 'error');
 
         } finally {
             setProjectsSelected([])
-            setLoadingGizSelectProjet(false)
+            setLoadingFsSelectProjet(false)
         }
     };
 
@@ -346,9 +355,6 @@ const Projects = () => {
         }
 
     }
-
-
-
 
     const downloadAllExcel = async (event) => {
         setLoadingExcel(true)
@@ -513,6 +519,21 @@ const Projects = () => {
     }, [projectsSelected.length === projects.length])
     console.log(projectsSelected, checkedAllProjet)
 
+    function formatage_date(date_debut, date_fin) {
+        const aujourdHui = new Date();
+        const debut = new Date(date_debut);
+        const fin = new Date(date_fin);
+
+        if (fin < aujourdHui) {
+            return "Terminés";
+        } else if (debut > aujourdHui) {
+            return "À venir";
+        } else {
+            return "En cours";
+        }
+    }
+
+
     return (
         <Layout>
 
@@ -525,17 +546,25 @@ const Projects = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-5 sm:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-                        <div className="text-3xl font-bold text-indigo-500 mb-2">{stats.total}</div>
+                        <div className="text-3xl font-bold text-secondary mb-2">{stats.total}</div>
                         <div className="text-gray-600">Total Projets</div>
                     </div>
                     <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-                        <div className="text-3xl font-bold text-indigo-500 mb-2">{stats.active}</div>
-                        <div className="text-gray-600">Projets Actifs</div>
+                        <div className="text-3xl font-bold text-secondary mb-2">{stats.ProjectsTermines}</div>
+                        <div className="text-gray-600">Projets Terminés</div>
                     </div>
                     <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-                        <div className="text-3xl font-bold text-indigo-500 mb-2">{stats.clients}</div>
+                        <div className="text-3xl font-bold text-secondary mb-2">{stats.ProjectsEnCours}</div>
+                        <div className="text-gray-600">Projets En cours</div>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+                        <div className="text-3xl font-bold text-secondary mb-2">{stats.ProjectsAVenir}</div>
+                        <div className="text-gray-600">Projets À Venir</div>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+                        <div className="text-3xl font-bold text-secondary mb-2">{stats.clients}</div>
                         <div className="text-gray-600">Clients</div>
                     </div>
                 </div>
@@ -546,13 +575,13 @@ const Projects = () => {
                         <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full lg:w-auto">
                             <input
                                 type="text"
-                                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none transition-colors"
                                 placeholder="Rechercher un projet, client, ville..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                             <select
-                                className="px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none bg-white cursor-pointer"
+                                className="px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-secondary focus:outline-none bg-white cursor-pointer"
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
                             >
@@ -563,24 +592,24 @@ const Projects = () => {
                             </select>
                         </div>
                         <div className="flex lg:flex-row flex-col gap-2">
-                            <button
-                                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
-                                onClick={(e) => downloadAllProjectsGIZ(e)}
+                            {/*  <button
+                                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                                onClick={(e) => downloadAllProjectsFS(e)}
                             >
-                                <span><Download /></span> Télécharger Word (GIZ) {loadingWordGiz && (
+                                <span><Download /></span> All (FS) {loadingWordFs && (
                                     <Loader2 className="w-6 h-6 animate-spin text-white mx-auto" />
                                 )}
-                            </button>
+                            </button> */}
                             <button
-                                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                                className="bg-gradient-to-r from-tertiary-fonce to-tertiary-fonce hover:from-tertiary-back hover:to-tertiary text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
                                 onClick={downloadAllExcel}
                             >
-                                <span> <Download /></span> Télécharger Excel {loadingExcel && (
+                                <span> <Download /></span> All Excel {loadingExcel && (
                                     <Loader2 className="w-6 h-6 animate-spin text-white mx-auto" />
                                 )}
                             </button>
                             <Link
-                                className="bg-blue-500 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
+                                className="bg-secondary hover:bg-secondary-hover text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-2"
                                 to="/projets/create"
                             >
                                 <span> <Plus /></span> Créer un nouveau projet
@@ -599,7 +628,7 @@ const Projects = () => {
                         <div className="flex items-center gap-2">
                             <label className="text-sm text-gray-600">Afficher:</label>
                             <select
-                                className="border border-gray-300 rounded px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
+                                className="border border-gray-300 rounded px-2 py-1 text-sm focus:border-secondary focus:outline-none"
                                 value={itemsPerPage}
                                 onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
                             >
@@ -611,17 +640,17 @@ const Projects = () => {
                             <span className="text-sm text-gray-600">par page</span>
                         </div>
                     </div>
-                    <div className={`px-6 py-3 ${projectsSelected.length != 0 ? 'flex' : 'hidden'} bg-blue-50 items-center justify-between`}>
+                    <div className={`px-6 py-3 ${projectsSelected.length != 0 ? 'flex' : 'hidden'} bg-gray-100 items-center justify-between`}>
                         <div className='text-sm text-gray-500'>
                             {projectsSelected.length} selectionnés
                         </div>
                         <div className='flex items-center justify-end gap-3'>
                             <button
                                 className="bg-blue-200  hover:bg-blue-100 text-blue-500 text-sm px-2 py-1 rounded-lg font-medium transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex items-center gap-1"
-                                onClick={(e) => downloadWordGizProjectSelected(e)}
+                                onClick={(e) => downloadWordFsProjectSelected(e)}
                             >
-                                <span><Download className='size-4' /></span> Télécharger GIZ ({projectsSelected.length}) {loadingGizSelectProjet && (
-                                    <Loader2 className="w-3 h-3 animate-spin text-blue-500 mx-auto" />
+                                <span><Download className='size-4' /></span> Télécharger FS ({projectsSelected.length}) {loadingFsSelectProjet && (
+                                    <Loader2 className="w-3 h-3 animate-spin text-secondary mx-auto" />
                                 )}
                             </button>
                             <button
@@ -648,9 +677,9 @@ const Projects = () => {
                                     <th> <input type="checkbox" className='rounded-md' name="all_check" checked={checkedAllProjet} onClick={(e) => checkAllProject(e.target.checked)} /></th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Nom du Projet</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Client</th>
-                                    <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Ville</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Adresse</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Date de Début</th>
+                                    <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Date de Fin</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Download</th>
                                     <th className="px-6 py-4 text-left font-semibold text-gray-700 border-b-2 border-gray-200">Actions</th>
                                 </tr>
@@ -662,7 +691,7 @@ const Projects = () => {
                                         <td className=" p-6 col-sapn-full" colSpan={7}>
                                             <div className="flex justify-center items-center h-64">
                                                 <div className="text-center">
-                                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                                                     <p className="text-gray-600">Chargement des projets...</p>
                                                 </div>
                                             </div>
@@ -676,15 +705,16 @@ const Projects = () => {
                                                 <div className="font-semibold text-gray-900">{project.nom_projet}</div>
                                             </td>
                                             <td className="px-6 py-4 text-gray-700">{project.nom_client}</td>
-                                            <td className="px-6 py-4 text-gray-700">{project.ville}</td>
+                                            {/* <td className="px-6 py-4 text-gray-700">{project.ville}</td> */}
                                             <td className="px-6 py-4">
                                                 <div className="text-gray-600 text-sm">{project.adresse_client}</div>
                                             </td>
                                             <td className="px-6 py-4 text-gray-700">{formatDate(project.date_debut)} </td>
+                                            <td className="px-6 py-4 text-gray-700">{formatDate(project.date_fin)}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex gap-1">
                                                     <button
-                                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-indigo-500"
+                                                        className="bg-tertiary-fonce hover:bg-tertiary-fonce text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-tertiary"
                                                         onClick={(e) => downloadProject(project.id, 'BM', e)}
                                                         title="Télécharger format Banque Mondiale"
                                                     >
@@ -693,13 +723,13 @@ const Projects = () => {
                                                         ) : "BM"}
                                                     </button>
                                                     <button
-                                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-green-500"
-                                                        onClick={(e) => downloadProject(project.id, 'GIZ', e)}
-                                                        title="Télécharger format GIZ"
+                                                        className="bg-secondary hover:bg-secondary-hover text-white px-3 py-1.5 rounded text-xs font-medium transition-colors border border-secondary "
+                                                        onClick={(e) => downloadProject(project.id, 'FS', e)}
+                                                        title="Télécharger format FS"
                                                     >
-                                                        {(projectToDownload == project.id && loadingGizOne) ? (
+                                                        {(projectToDownload == project.id && loadingFsOne) ? (
                                                             <Loader2 className="w-4 h-4 animate-spin text-white mx-auto" />
-                                                        ) : "GIZ"}
+                                                        ) : "FS"}
                                                     </button>
                                                 </div>
                                             </td>
@@ -712,7 +742,7 @@ const Projects = () => {
                                                         (
                                                             <Link
                                                                 to={`/projets/edit/${project.id}`}
-                                                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
+                                                                className="bg-primary-hover hover:bg-primary text-white px-3 py-1.5 rounded text-xs transition-colors"
 
                                                             >
                                                                 <Edit className='size-4' />
@@ -722,7 +752,7 @@ const Projects = () => {
                                                     }
                                                     <Link
                                                         to={`/projets/${project.id}`}
-                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs transition-colors"
+                                                        className="bg-secondary hover:bg-secondary-hover text-white px-3 py-1.5 rounded text-xs transition-colors"
 
 
                                                     >
@@ -778,7 +808,7 @@ const Projects = () => {
                                             ) : (
                                                 <button
                                                     className={`px-3 py-2 text-sm border rounded transition-colors ${page === currentPage
-                                                        ? 'bg-indigo-500 text-white border-indigo-500'
+                                                        ? 'bg-secondary text-white border-secondary'
                                                         : 'border-gray-300 hover:bg-gray-50'
                                                         }`}
                                                     onClick={() => goToPage(page)}
@@ -864,7 +894,7 @@ const Projects = () => {
                         key={notification.id}
                         className={`px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ${notification.type === 'success' ? 'bg-green-500 text-white' :
                             notification.type === 'error' ? 'bg-red-500 text-white' :
-                                'bg-blue-500 text-white'
+                                'bg-secondary text-white'
                             }`}
                     >
                         {notification.message}

@@ -114,8 +114,8 @@ const Home = () => {
                             <div className="mb-6">
                                 <div
                                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-300 cursor-pointer ${isDragOver
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-300 bg-gray-50 hover:border-blue-500'
+                                        ? 'border-secondary bg-primary'
+                                        : 'border-gray-300 bg-gray-50 hover:border-secondary/50'
                                         }`}
                                     onDragEnter={handleDragEnter}
                                     onDragLeave={handleDragLeave}
@@ -138,7 +138,7 @@ const Home = () => {
                                     <button
                                         type="button"
                                         onClick={handleBrowseClick}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-300"
+                                        className="bg-primary hover:bg-primary-hover text-white py-2 px-4 rounded-md transition duration-300"
                                     >
                                         Parcourir les fichiers
                                     </button>
@@ -155,7 +155,7 @@ const Home = () => {
                                     <button
                                         onClick={handleSubmit}
                                         disabled={!selectedFile}
-                                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-secondary hover:bg-secondary-hover text-white py-2 px-6 rounded-md transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Importer et continuer
                                     </button>
@@ -169,8 +169,8 @@ const Home = () => {
 
                             <div className="space-y-6">
                                 <div className="flex items-start">
-                                    <div className="bg-blue-100 p-2 rounded-full mr-4">
-                                        <Eye className="w-5 h-5 text-blue-600" />
+                                    <div className="bg-tertiary/30 p-2 rounded-full mr-4">
+                                        <Eye className="w-5 h-5 text-primary" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-gray-800">Visualisation des données</h3>
@@ -181,8 +181,8 @@ const Home = () => {
                                 </div>
 
                                 <div className="flex items-start">
-                                    <div className="bg-blue-100 p-2 rounded-full mr-4">
-                                        <Edit className="w-5 h-5 text-blue-600" />
+                                    <div className="bg-tertiary/30 p-2 rounded-full mr-4">
+                                        <Edit className="w-5 h-5 text-primary" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-gray-800">Modification des entrées</h3>
@@ -193,8 +193,8 @@ const Home = () => {
                                 </div>
 
                                 <div className="flex items-start">
-                                    <div className="bg-blue-100 p-2 rounded-full mr-4">
-                                        <FileText className="w-5 h-5 text-blue-600" />
+                                    <div className="bg-tertiary/30 p-2 rounded-full mr-4">
+                                        <FileText className="w-5 h-5 text-primary" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-gray-800">Génération de documents Word</h3>
@@ -205,8 +205,8 @@ const Home = () => {
                                 </div>
 
                                 <div className="flex items-start">
-                                    <div className="bg-blue-100 p-2 rounded-full mr-4">
-                                        <Download className="w-5 h-5 text-blue-600" />
+                                    <div className="bg-tertiary/30 p-2 rounded-full mr-4">
+                                        <Download className="w-5 h-5 text-primary" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-gray-800">Téléchargement flexible</h3>
@@ -227,7 +227,7 @@ const Home = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-white p-5 rounded-lg shadow text-center">
-                                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="font-bold">1</span>
                                 </div>
                                 <h3 className="font-medium text-gray-800 mb-2">Importez</h3>
@@ -235,7 +235,7 @@ const Home = () => {
                             </div>
 
                             <div className="bg-white p-5 rounded-lg shadow text-center">
-                                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="font-bold">2</span>
                                 </div>
                                 <h3 className="font-medium text-gray-800 mb-2">Visualisez</h3>
@@ -243,7 +243,7 @@ const Home = () => {
                             </div>
 
                             <div className="bg-white p-5 rounded-lg shadow text-center">
-                                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="font-bold">3</span>
                                 </div>
                                 <h3 className="font-medium text-gray-800 mb-2">Modifiez</h3>
@@ -251,7 +251,7 @@ const Home = () => {
                             </div>
 
                             <div className="bg-white p-5 rounded-lg shadow text-center">
-                                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                                <div className="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4">
                                     <span className="font-bold">4</span>
                                 </div>
                                 <h3 className="font-medium text-gray-800 mb-2">Générez</h3>

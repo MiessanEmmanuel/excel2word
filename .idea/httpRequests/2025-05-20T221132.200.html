@@ -36,7 +36,7 @@
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">Importer un fichier Excel</h2>
 
                 <form action="/upload-file" method="post" encType="multipart/form-data" class="mb-6">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors duration-300 cursor-pointer bg-gray-50"
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-secondary-back0 transition-colors duration-300 cursor-pointer bg-gray-50"
                         id="drop-area">
                         <input type="file" name="excel_file" id="file-input" accept=".xlsx,.xls" class="hidden">
                         <div class="mb-4">
@@ -203,11 +203,11 @@
             });
 
             function highlight() {
-                dropArea.classList.add('border-blue-500', 'bg-blue-50');
+                dropArea.classList.add('border-secondary-back0', 'bg-secondary-back');
             }
 
             function unhighlight() {
-                dropArea.classList.remove('border-blue-500', 'bg-blue-50');
+                dropArea.classList.remove('border-secondary-back0', 'bg-secondary-back');
             }
 
             dropArea.addEventListener('drop', handleDrop, false);
